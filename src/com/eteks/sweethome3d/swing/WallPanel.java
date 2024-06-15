@@ -177,9 +177,7 @@ public class WallPanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(WallController.Property.X_START, xStartChangeListener);
     xStartSpinnerModel.addChangeListener(new WallPanelChangeListener(this) {
         public void doStateChanged(ChangeEvent ev) {
-          controller.removePropertyChangeListener(WallController.Property.X_START, xStartChangeListener);
           controller.setXStart(xStartSpinnerModel.getLength());
-          controller.addPropertyChangeListener(WallController.Property.X_START, xStartChangeListener);
         }
       });
 
@@ -200,9 +198,7 @@ public class WallPanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(WallController.Property.Y_START, yStartChangeListener);
     yStartSpinnerModel.addChangeListener(new WallPanelChangeListener(this) {
         public void doStateChanged(ChangeEvent ev) {
-          controller.removePropertyChangeListener(WallController.Property.Y_START, yStartChangeListener);
           controller.setYStart(yStartSpinnerModel.getLength());
-          controller.addPropertyChangeListener(WallController.Property.Y_START, yStartChangeListener);
         }
       });
 
@@ -223,9 +219,7 @@ public class WallPanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(WallController.Property.X_END, xEndChangeListener);
     xEndSpinnerModel.addChangeListener(new WallPanelChangeListener(this) {
         public void doStateChanged(ChangeEvent ev) {
-          controller.removePropertyChangeListener(WallController.Property.X_END, xEndChangeListener);
           controller.setXEnd(xEndSpinnerModel.getLength());
-          controller.addPropertyChangeListener(WallController.Property.X_END, xEndChangeListener);
         }
       });
 
@@ -246,9 +240,7 @@ public class WallPanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(WallController.Property.Y_END, yEndChangeListener);
     yEndSpinnerModel.addChangeListener(new WallPanelChangeListener(this) {
         public void doStateChanged(ChangeEvent ev) {
-          controller.removePropertyChangeListener(WallController.Property.Y_END, yEndChangeListener);
           controller.setYEnd(yEndSpinnerModel.getLength());
-          controller.addPropertyChangeListener(WallController.Property.Y_END, yEndChangeListener);
         }
       });
 
@@ -271,11 +263,7 @@ public class WallPanel extends JPanel implements DialogView {
         distanceToEndPointChangeListener);
     distanceToEndPointSpinnerModel.addChangeListener(new WallPanelChangeListener(this) {
         public void doStateChanged(ChangeEvent ev) {
-          controller.removePropertyChangeListener(WallController.Property.DISTANCE_TO_END_POINT,
-              distanceToEndPointChangeListener);
           controller.setDistanceToEndPoint(distanceToEndPointSpinnerModel.getLength());
-          controller.addPropertyChangeListener(WallController.Property.DISTANCE_TO_END_POINT,
-              distanceToEndPointChangeListener);
         }
       });
 
@@ -613,11 +601,7 @@ public class WallPanel extends JPanel implements DialogView {
         rectangularWallHeightChangeListener);
     rectangularWallHeightSpinnerModel.addChangeListener(new WallPanelChangeListener(this) {
         public void doStateChanged(ChangeEvent ev) {
-          controller.removePropertyChangeListener(WallController.Property.RECTANGULAR_WALL_HEIGHT,
-              rectangularWallHeightChangeListener);
           controller.setRectangularWallHeight(rectangularWallHeightSpinnerModel.getLength());
-          controller.addPropertyChangeListener(WallController.Property.RECTANGULAR_WALL_HEIGHT,
-              rectangularWallHeightChangeListener);
         }
       });
 
@@ -656,8 +640,6 @@ public class WallPanel extends JPanel implements DialogView {
         slopingWallHeightAtStartChangeListener);
     slopingWallHeightAtStartSpinnerModel.addChangeListener(new WallPanelChangeListener(this) {
         public void doStateChanged(ChangeEvent ev) {
-          controller.removePropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_START,
-              slopingWallHeightAtStartChangeListener);
           controller.setSlopingWallHeightAtStart(slopingWallHeightAtStartSpinnerModel.getLength());
           if (minimumHeight == 0
               && controller.getSlopingWallHeightAtStart() == 0
@@ -665,8 +647,6 @@ public class WallPanel extends JPanel implements DialogView {
             // Ensure wall height is never 0
             controller.setSlopingWallHeightAtEnd(minimumLength);
           }
-          controller.addPropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_START,
-              slopingWallHeightAtStartChangeListener);
         }
       });
 
@@ -688,8 +668,6 @@ public class WallPanel extends JPanel implements DialogView {
         slopingWallHeightAtEndChangeListener);
     slopingWallHeightAtEndSpinnerModel.addChangeListener(new WallPanelChangeListener(this) {
         public void doStateChanged(ChangeEvent ev) {
-          controller.removePropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_END,
-              slopingWallHeightAtEndChangeListener);
           controller.setSlopingWallHeightAtEnd(slopingWallHeightAtEndSpinnerModel.getLength());
           if (minimumHeight == 0
               && controller.getSlopingWallHeightAtStart() == 0
@@ -697,8 +675,6 @@ public class WallPanel extends JPanel implements DialogView {
             // Ensure wall height is never 0
             controller.setSlopingWallHeightAtStart(minimumLength);
           }
-          controller.addPropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_END,
-              slopingWallHeightAtEndChangeListener);
         }
       });
 
@@ -844,11 +820,7 @@ public class WallPanel extends JPanel implements DialogView {
         thicknessChangeListener);
     thicknessSpinnerModel.addChangeListener(new WallPanelChangeListener(this) {
         public void doStateChanged(ChangeEvent ev) {
-          controller.removePropertyChangeListener(WallController.Property.THICKNESS,
-              thicknessChangeListener);
           controller.setThickness(thicknessSpinnerModel.getLength());
-          controller.addPropertyChangeListener(WallController.Property.THICKNESS,
-              thicknessChangeListener);
         }
       });
 
@@ -893,12 +865,8 @@ public class WallPanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(WallController.Property.ARC_EXTENT_IN_DEGREES, arcExtentChangeListener);
     arcExtentSpinnerModel.addChangeListener(new WallPanelChangeListener(this) {
         public void doStateChanged(ChangeEvent ev) {
-          controller.removePropertyChangeListener(WallController.Property.ARC_EXTENT_IN_DEGREES,
-              arcExtentChangeListener);
           Number value = (Number)arcExtentSpinnerModel.getValue();
           controller.setArcExtentInDegrees(value != null ? value.floatValue() : null);
-          controller.addPropertyChangeListener(WallController.Property.ARC_EXTENT_IN_DEGREES,
-              arcExtentChangeListener);
         }
       });
 
