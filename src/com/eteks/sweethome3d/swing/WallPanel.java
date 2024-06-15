@@ -588,7 +588,8 @@ public class WallPanel extends JPanel implements DialogView {
     this.rectangularWallHeightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
             WallPanel.class, "rectangularWallHeightLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel rectangularWallHeightSpinnerModel =
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, maximumLength);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.0f, maximumLength);
+        //new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumLength, maximumLength);
     this.rectangularWallHeightSpinner = new NullableSpinner(rectangularWallHeightSpinnerModel);
     rectangularWallHeightSpinnerModel.setNullable(controller.getRectangularWallHeight() == null);
     rectangularWallHeightSpinnerModel.setLength(controller.getRectangularWallHeight());
@@ -627,9 +628,9 @@ public class WallPanel extends JPanel implements DialogView {
     // Create height at start label and its spinner bound to SLOPING_WALL_HEIGHT_AT_START controller property
     this.slopingWallHeightAtStartLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         WallPanel.class, "slopingWallHeightAtStartLabel.text"));
-    final float minimumHeight = controller.getSlopingWallHeightAtStart() != null && controller.getSlopingWallHeightAtEnd() != null
-        ? 0
-        : minimumLength;
+    final float minimumHeight = 0.0f;//controller.getSlopingWallHeightAtStart() != null && controller.getSlopingWallHeightAtEnd() != null
+    //    ? 0
+    //    : minimumLength;
     final NullableSpinner.NullableSpinnerLengthModel slopingWallHeightAtStartSpinnerModel =
         new NullableSpinner.NullableSpinnerLengthModel(preferences, minimumHeight, maximumLength);
     this.slopingWallHeightAtStartSpinner = new NullableSpinner(slopingWallHeightAtStartSpinnerModel);
@@ -648,12 +649,12 @@ public class WallPanel extends JPanel implements DialogView {
           controller.removePropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_START,
               slopingWallHeightAtStartChangeListener);
           controller.setSlopingWallHeightAtStart(slopingWallHeightAtStartSpinnerModel.getLength());
-          if (minimumHeight == 0
-              && controller.getSlopingWallHeightAtStart() == 0
-              && controller.getSlopingWallHeightAtEnd() == 0) {
-            // Ensure wall height is never 0
-            controller.setSlopingWallHeightAtEnd(minimumLength);
-          }
+          //if (minimumHeight == 0
+          //    && controller.getSlopingWallHeightAtStart() == 0
+          //    && controller.getSlopingWallHeightAtEnd() == 0) {
+          //  // Ensure wall height is never 0
+          //  controller.setSlopingWallHeightAtEnd(minimumLength);
+          //}
           controller.addPropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_START,
               slopingWallHeightAtStartChangeListener);
         }
@@ -680,12 +681,12 @@ public class WallPanel extends JPanel implements DialogView {
           controller.removePropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_END,
               slopingWallHeightAtEndChangeListener);
           controller.setSlopingWallHeightAtEnd(slopingWallHeightAtEndSpinnerModel.getLength());
-          if (minimumHeight == 0
-              && controller.getSlopingWallHeightAtStart() == 0
-              && controller.getSlopingWallHeightAtEnd() == 0) {
-            // Ensure wall height is never 0
-            controller.setSlopingWallHeightAtStart(minimumLength);
-          }
+          //if (minimumHeight == 0
+          //    && controller.getSlopingWallHeightAtStart() == 0
+          //    && controller.getSlopingWallHeightAtEnd() == 0) {
+          //  // Ensure wall height is never 0
+          //  controller.setSlopingWallHeightAtStart(minimumLength);
+          //}
           controller.addPropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_END,
               slopingWallHeightAtEndChangeListener);
         }

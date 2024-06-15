@@ -187,7 +187,7 @@ public class LevelPanel extends JPanel implements DialogView {
         });
     }
 
-    final float minimumLength = preferences.getLengthUnit().getMinimumLength();
+    final float minimumLength = 0.0f;//preferences.getLengthUnit().getMinimumLength();
     if (controller.isPropertyEditable(LevelController.Property.FLOOR_THICKNESS)) {
       // Create floor thickness label and its spinner bound to FLOOR_THICKNESS controller property
       this.floorThicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,

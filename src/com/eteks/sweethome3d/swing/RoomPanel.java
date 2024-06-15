@@ -635,7 +635,7 @@ public class RoomPanel extends JPanel implements DialogView {
     if (this.firstWallChange
         && this.splitSurroundingWallsCheckBox != null
         && this.splitSurroundingWallsCheckBox.isEnabled()) {
-      this.splitSurroundingWallsCheckBox.doClick();
+      //this.splitSurroundingWallsCheckBox.doClick();
       this.firstWallChange = false;
     }
   }

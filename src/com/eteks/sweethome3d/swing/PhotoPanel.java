@@ -342,13 +342,24 @@ public class PhotoPanel extends JPanel implements DialogView {
     this.timeSpinner.setEditor(timeEditor);
     SwingTools.addAutoSelectionOnFocusGain(timeEditor.getTextField());
 
-    final PropertyChangeListener timeChangeListener = new PropertyChangeListener() {
-      public void propertyChange(PropertyChangeEvent ev) {
-        Date date = new Date(Camera.convertTimeToTimeZone(controller.getTime(), TimeZone.getDefault().getID()));
-        dateSpinnerModel.setValue(date);
-        timeSpinnerModel.setValue(date);
-      }
-    };
+    class TimeChangeListener implements PropertyChangeListener {
+        public ChangeListener dateTimeChangeListener;
+        @Override
+        public void propertyChange(PropertyChangeEvent ev) {
+          if (dateTimeChangeListener != null) {
+            dateSpinnerModel.removeChangeListener(dateTimeChangeListener);
+            timeSpinnerModel.removeChangeListener(dateTimeChangeListener);
+          }
+          Date date = new Date(Camera.convertTimeToTimeZone(controller.getTime(), TimeZone.getDefault().getID()));
+          dateSpinnerModel.setValue(date);
+          timeSpinnerModel.setValue(date);
+          if (dateTimeChangeListener != null) {
+            dateSpinnerModel.addChangeListener(dateTimeChangeListener);
+            timeSpinnerModel.addChangeListener(dateTimeChangeListener);
+          }
+        }
+    }
+    final TimeChangeListener timeChangeListener = new TimeChangeListener();
     controller.addPropertyChangeListener(PhotoController.Property.TIME, timeChangeListener);
     final ChangeListener dateTimeChangeListener = new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -369,6 +380,7 @@ public class PhotoPanel extends JPanel implements DialogView {
           controller.addPropertyChangeListener(PhotoController.Property.TIME, timeChangeListener);
         }
       };
+    timeChangeListener.dateTimeChangeListener = dateTimeChangeListener;
     dateSpinnerModel.addChangeListener(dateTimeChangeListener);
     timeSpinnerModel.addChangeListener(dateTimeChangeListener);
 
