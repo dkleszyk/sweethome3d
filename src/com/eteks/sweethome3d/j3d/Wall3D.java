@@ -298,17 +298,17 @@ public class Wall3D extends Object3DBranch {
       topElevationAtStart =
       topElevationAtEnd = getBaseboardTopElevation(baseboard);
     }
-    float minBottomElevation = Math.min(bottomElevationAtStart, bottomElevationAtEnd);
-    float maxTopElevation = Math.max(topElevationAtStart, topElevationAtEnd);
+    final float minBottomElevation = Math.min(bottomElevationAtStart, bottomElevationAtEnd);
+    final float maxTopElevation = Math.max(topElevationAtStart, topElevationAtEnd);
 
     // Compute wall angles and top line factors
-    double wallYawAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), wall.getXEnd() - wall.getXStart());
+    final double wallYawAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), wall.getXEnd() - wall.getXStart());
     final double cosWallYawAngle = Math.cos(wallYawAngle);
     final double sinWallYawAngle = Math.sin(wallYawAngle);
-    double wallXStartWithZeroYaw = cosWallYawAngle * wall.getXStart() + sinWallYawAngle * wall.getYStart();
-    double wallXEndWithZeroYaw = cosWallYawAngle * wall.getXEnd() + sinWallYawAngle * wall.getYEnd();
-    Float arcExtent = wall.getArcExtent();
-    boolean roundWall = arcExtent != null && arcExtent.floatValue() != 0;
+    final double wallXStartWithZeroYaw = cosWallYawAngle * wall.getXStart() + sinWallYawAngle * wall.getYStart();
+    final double wallXEndWithZeroYaw = cosWallYawAngle * wall.getXEnd() + sinWallYawAngle * wall.getYEnd();
+    final Float arcExtent = wall.getArcExtent();
+    final boolean roundWall = arcExtent != null && arcExtent.floatValue() != 0;
     final double topLineAlpha;
     final double topLineBeta;
     if (topElevationAtStart == topElevationAtEnd) {
