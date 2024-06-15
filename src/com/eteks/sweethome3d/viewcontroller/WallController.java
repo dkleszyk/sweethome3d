@@ -93,7 +93,7 @@ public class WallController implements Controller {
   private WallShape    shape;
   private Float        rectangularWallHeight;
   private Float        slopingWallHeightAtStart;
-  private Float        sloppingWallHeightAtEnd;
+  private Float        slopingWallHeightAtEnd;
   private Float        thickness;
   private Float        arcExtentInDegrees;
 
@@ -1120,16 +1120,16 @@ public class WallController implements Controller {
         }
       } else if (shape == WallShape.SLOPING_WALL) {
         if (this.slopingWallHeightAtStart != null
-            && this.sloppingWallHeightAtEnd != null) {
-          float baseboardMaxHeight = Math.max(this.sloppingWallHeightAtEnd, this.slopingWallHeightAtStart);
+            && this.slopingWallHeightAtEnd != null) {
+          float baseboardMaxHeight = Math.max(this.slopingWallHeightAtEnd, this.slopingWallHeightAtStart);
           getLeftSideBaseboardController().setMaxHeight(baseboardMaxHeight);
           getRightSideBaseboardController().setMaxHeight(baseboardMaxHeight);
         } else if (this.slopingWallHeightAtStart != null) {
           getLeftSideBaseboardController().setMaxHeight(this.slopingWallHeightAtStart);
           getRightSideBaseboardController().setMaxHeight(this.slopingWallHeightAtStart);
-        } else if (this.sloppingWallHeightAtEnd != null) {
-          getLeftSideBaseboardController().setMaxHeight(this.sloppingWallHeightAtEnd);
-          getRightSideBaseboardController().setMaxHeight(this.sloppingWallHeightAtEnd);
+        } else if (this.slopingWallHeightAtEnd != null) {
+          getLeftSideBaseboardController().setMaxHeight(this.slopingWallHeightAtEnd);
+          getRightSideBaseboardController().setMaxHeight(this.slopingWallHeightAtEnd);
         }
       }
     }
@@ -1179,8 +1179,8 @@ public class WallController implements Controller {
 
       setShape(WallShape.SLOPING_WALL);
       if (slopingWallHeightAtStart != null) {
-        float baseboardMaxHeight = this.sloppingWallHeightAtEnd != null
-            ? Math.max(this.sloppingWallHeightAtEnd, slopingWallHeightAtStart)
+        float baseboardMaxHeight = this.slopingWallHeightAtEnd != null
+            ? Math.max(this.slopingWallHeightAtEnd, slopingWallHeightAtStart)
             : slopingWallHeightAtStart;
         baseboardMaxHeight = Math.max(baseboardMaxHeight, this.preferences.getLengthUnit().getMinimumLength());
         getLeftSideBaseboardController().setMaxHeight(baseboardMaxHeight);
@@ -1199,18 +1199,18 @@ public class WallController implements Controller {
   /**
    * Sets the edited height at end of a sloping wall.
    */
-  public void setSlopingWallHeightAtEnd(Float sloppingWallHeightAtEnd) {
-    if (sloppingWallHeightAtEnd != this.sloppingWallHeightAtEnd) {
-      Float oldSlopingWallHeightAtEnd = this.sloppingWallHeightAtEnd;
-      this.sloppingWallHeightAtEnd = sloppingWallHeightAtEnd;
+  public void setSlopingWallHeightAtEnd(Float slopingWallHeightAtEnd) {
+    if (slopingWallHeightAtEnd != this.slopingWallHeightAtEnd) {
+      Float oldSlopingWallHeightAtEnd = this.slopingWallHeightAtEnd;
+      this.slopingWallHeightAtEnd = slopingWallHeightAtEnd;
       this.propertyChangeSupport.firePropertyChange(Property.SLOPING_WALL_HEIGHT_AT_END.name(),
-          oldSlopingWallHeightAtEnd, sloppingWallHeightAtEnd);
+          oldSlopingWallHeightAtEnd, slopingWallHeightAtEnd);
 
       setShape(WallShape.SLOPING_WALL);
-      if (sloppingWallHeightAtEnd != null) {
+      if (slopingWallHeightAtEnd != null) {
         float baseboardMaxHeight = this.slopingWallHeightAtStart != null
-            ? Math.max(this.slopingWallHeightAtStart, sloppingWallHeightAtEnd)
-            : sloppingWallHeightAtEnd;
+            ? Math.max(this.slopingWallHeightAtStart, slopingWallHeightAtEnd)
+            : slopingWallHeightAtEnd;
         baseboardMaxHeight = Math.max(baseboardMaxHeight, this.preferences.getLengthUnit().getMinimumLength());
         getLeftSideBaseboardController().setMaxHeight(baseboardMaxHeight);
         getRightSideBaseboardController().setMaxHeight(baseboardMaxHeight);
@@ -1222,7 +1222,7 @@ public class WallController implements Controller {
    * Returns the edited height at end of a sloping wall.
    */
   public Float getSlopingWallHeightAtEnd() {
-    return this.sloppingWallHeightAtEnd;
+    return this.slopingWallHeightAtEnd;
   }
 
   /**
