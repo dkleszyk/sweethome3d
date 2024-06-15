@@ -809,12 +809,14 @@ public class Wall3D extends Object3DBranch {
     List<Point3f> coords = new ArrayList<Point3f> (rectanglesCount * 4);
     for (int index = 0; index < points.length; index++) {
       if (usedRectangle [index]) {
-        float y = minElevation;
-        Point3f point1 = bottom [index];
         int nextIndex = (index + 1) % points.length;
+        Point3f point1 = bottom [index];
         Point3f point2 = bottom [nextIndex];
         if (subpartSize > 0) {
-          for (float yMax = Math.min(top [index].y, top [nextIndex].y) - subpartSize / 2; y < yMax; y += subpartSize) {
+          for (float y = minElevation,
+                     yMax = Math.min(top [index].y, top [nextIndex].y) - subpartSize / 2;
+               y < yMax;
+               y += subpartSize) {
             coords.add(point1);
             coords.add(point2);
             point1 = new Point3f(bottom [index].x, y, bottom [index].z);
@@ -895,8 +897,10 @@ public class Wall3D extends Object3DBranch {
           }
 
           if (subpartSize > 0) {
-            float y = minElevation;
-            for (float yMax = Math.min(top [index].y, top [nextIndex].y) - subpartSize / 2; y < yMax; y += subpartSize) {
+            for (float y = minElevation,
+                       yMax = Math.min(top [index].y, top [nextIndex].y) - subpartSize / 2;
+                 y < yMax;
+                 y += subpartSize) {
               textureCoords [j++] = textureCoords1;
               textureCoords [j++] = textureCoords2;
               textureCoords1 = new TexCoord2f(textureCoords1.x, y);
