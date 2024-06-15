@@ -318,6 +318,14 @@ public class Wall3D extends Object3DBranch {
       topLineAlpha = (topElevationAtEnd - topElevationAtStart) / (wallXEndWithZeroYaw - wallXStartWithZeroYaw);
       topLineBeta = topElevationAtStart - topLineAlpha * wallXStartWithZeroYaw;
     }
+    final ElevationPlane wallBottom = ElevationPlane.create(wall.getXStart(), wall.getYStart(),
+                                                            bottomElevationAtStart,
+                                                            wall.getXEnd(), wall.getYEnd(),
+                                                            bottomElevationAtEnd);
+    final ElevationPlane wallTop = ElevationPlane.create(wall.getXStart(), wall.getYStart(),
+                                                         topElevationAtStart,
+                                                         wall.getXEnd(), wall.getYEnd(),
+                                                         topElevationAtEnd);
 
     // Search which doors or windows intersect with this wall side or its baseboard
     List<DoorOrWindowArea> windowIntersections = new ArrayList<DoorOrWindowArea>();
@@ -1575,6 +1583,139 @@ public class Wall3D extends Object3DBranch {
     HomeEnvironment.DrawingMode drawingMode = getHome().getEnvironment().getDrawingMode();
     renderingAttributes.setVisible(drawingMode == HomeEnvironment.DrawingMode.OUTLINE
         || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE);
+  }
+
+  /**
+   * The plane of a horizontal part of a wall or baseboard.
+   */
+  private static abstract class ElevationPlane {
+
+    /**
+     * Gets the elevation at the point specified by
+     * <code>x</code> and <code>y</code>.
+     */
+    public abstract float getElevationAtPoint(float x, float y);
+
+    /**
+     * Gets the elevation at the specified point.
+     * <p>
+     * <code>point</code> should be an array containing two values;
+     * the value at index 0 is <code>x</code> and the value at
+     * index 1 is <code>y</code>.
+     */
+    public float getElevationAtPoint(float [] point) {
+      return getElevationAtPoint(point [0], point [1]);
+    }
+
+    /**
+     * Creates a level elevation plane.
+     */
+    public static ElevationPlane create(float elevation) {
+      return new LevelPlane(elevation);
+    }
+
+    /**
+     * Creates an elevation plane that may be sloped or level.
+     */
+    public static ElevationPlane create(float startX, float startY,
+                                        float startElevation,
+                                        float endX, float endY,
+                                        float endElevation) {
+      if (startElevation == endElevation
+          || (startX == endX && startY == endY)) {
+        return new LevelPlane(startElevation);
+      }
+
+      final double x0 = (double) startX;
+      final double y0 = (double) startY;
+      final double z0 = (double) startElevation;
+      final double x1 = (double) endX;
+      final double y1 = (double) endY;
+      final double z1 = (double) endElevation;
+      final double alpha;
+      final double beta;
+      final double gamma;
+      //
+      // computed using wolfram alpha.
+      //
+      // reduce[{x0 != x1, y0 != y1, z0 != z1,
+      //         z0 = a*x0 + b*y0 + g,
+      //         z1 = a*x1 + b*y1 + g,
+      //         z0 = a*(x0 - (y1 - y0)) + b*(y0 + (x1 - x0)) + g},
+      //        {a, b, g}, reals]
+      //
+      // third constraint comes from fact that the elevation is constant
+      // for all points along a line perpendicular to the wall line.
+      //
+      // here we pick a point that's easy to calculate:
+      // <y0 - y1, x1 - x0> is perpendicular to <x1 - x0, y1 - y0>
+      // so add that vector to (x0, y0) to to find a third point
+      // that has the same elevation as (x0, y0).
+      //
+      if (startY == endY) {
+        assert startX != endX; // should've already returned LevelPlane above
+        alpha = (z1 - z0) / (x1 - x0);
+        beta = 0;
+        gamma = (x1 * z0 - x0 * z1)  / (x1 - x0);
+      } else if (startX == endX) {
+        alpha = 0;
+        beta = (z1 - z0) / (y1 - y0);
+        gamma = (y1 * z0 - y0 * z1)  / (y1 - y0);
+      } else {
+        final double dsq = (x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0);
+        alpha = ( (z1 - z0) * (x1 - x0) ) / dsq;
+        beta = ( (z1 - z0) * (y1 - y0) ) / dsq;
+        gamma = ( (x1 - x0) * (x1 * z0 - x0 * z1) + (y1 - y0) * (y1 * z0 - y0 * z1) ) / dsq;
+      }
+
+      return new SlopedPlane(alpha, beta, gamma);
+    }
+
+    private static final class LevelPlane
+      extends ElevationPlane {
+
+      private final float elevation;
+
+      public LevelPlane(float elevation) {
+        this.elevation = elevation;
+      }
+
+      @Override
+      public float getElevationAtPoint(float [] point) {
+        return elevation;
+      }
+
+      @Override
+      public float getElevationAtPoint(float x, float y) {
+        return elevation;
+      }
+    }
+
+    private static final class SlopedPlane
+      extends ElevationPlane {
+
+      private final double alpha;
+      private final double beta;
+      private final double gamma;
+
+      public SlopedPlane(double alpha, double beta, double gamma) {
+        this.alpha = alpha;
+        this.beta = beta;
+        this.gamma = gamma;
+      }
+
+      @Override
+      public float getElevationAtPoint(float x, float y) {
+        return (float) (alpha * x + beta * y + gamma);
+      }
+    }
+  }
+
+  /**
+   * Creates a 3d coordinate from a point and elevation plane.
+   */
+  private static Point3f createCoordinateAtPoint(float [] point, ElevationPlane plane) {
+    return new Point3f(point [0], plane.getElevationAtPoint(point), point [1]);
   }
 
   /**
