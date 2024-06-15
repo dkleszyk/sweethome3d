@@ -122,6 +122,15 @@ public class WallPanel extends JPanel implements DialogView {
   private JSpinner             thicknessSpinner;
   private JLabel               arcExtentLabel;
   private JSpinner             arcExtentSpinner;
+  private NullableCheckBox     attachToFloorCheckBox;
+  private JRadioButton         rectangularElevationRadioButton;
+  private JLabel               rectangularElevationLabel;
+  private JSpinner             rectangularElevationSpinner;
+  private JRadioButton         slopingElevationRadioButton;
+  private JLabel               slopingElevationAtStartLabel;
+  private JSpinner             slopingElevationAtStartSpinner;
+  private JLabel               slopingElevationAtEndLabel;
+  private JSpinner             slopingElevationAtEndSpinner;
   private JEditorPane          wallOrientationLabel;
   private String               dialogTitle;
 
@@ -693,6 +702,130 @@ public class WallPanel extends JPanel implements DialogView {
         }
       });
 
+    // Create elevation shape radio buttons bound to ELEVATION_SHAPE controller property
+    this.rectangularElevationRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences,
+        WallPanel.class, "rectangularElevationRadioButton.text"));
+    if (controller.getElevationShape() == WallController.WallShape.RECTANGULAR_WALL) {
+      this.rectangularElevationRadioButton.setSelected(true);
+    }
+    this.rectangularElevationRadioButton.addChangeListener(new WallPanelChangeListener(this) {
+        public void doStateChanged(ChangeEvent ev) {
+          if (rectangularElevationRadioButton.isSelected()) {
+            controller.setElevationShape(WallController.WallShape.RECTANGULAR_WALL);
+          }
+        }
+      });
+
+    this.slopingElevationRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences,
+        WallPanel.class, "slopingElevationRadioButton.text"));
+    if (controller.getElevationShape() == WallController.WallShape.SLOPING_WALL) {
+      this.slopingElevationRadioButton.setSelected(true);
+    }
+    this.slopingElevationRadioButton.addChangeListener(new WallPanelChangeListener(this) {
+        public void doStateChanged(ChangeEvent ev) {
+          if (slopingElevationRadioButton.isSelected()) {
+            controller.setElevationShape(WallController.WallShape.SLOPING_WALL);
+          }
+        }
+      });
+
+    ButtonGroup elevationShapeButtonGroup = new ButtonGroup();
+    elevationShapeButtonGroup.add(this.rectangularElevationRadioButton);
+    elevationShapeButtonGroup.add(this.slopingElevationRadioButton);
+    controller.addPropertyChangeListener(WallController.Property.ELEVATION_SHAPE,
+        new ControllerPropertyChangeListener(this) {
+          public void controllerPropertyChange(PropertyChangeEvent ev) {
+            if (ev.getNewValue() == WallController.WallShape.RECTANGULAR_WALL) {
+              rectangularElevationRadioButton.setSelected(true);
+            } else if (ev.getNewValue() == WallController.WallShape.SLOPING_WALL) {
+              slopingElevationRadioButton.setSelected(true);
+            } else { // null
+              SwingTools.deselectAllRadioButtons(rectangularElevationRadioButton, slopingElevationRadioButton);
+            }
+          }
+        });
+
+    // Create rectangular elevation label and its spinner bound to RECTANGULAR_ELEVATION controller property
+    this.rectangularElevationLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
+            WallPanel.class, "rectangularElevationLabel.text", unitName));
+    final NullableSpinner.NullableSpinnerLengthModel rectangularElevationSpinnerModel =
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.0f, maximumLength);
+    this.rectangularElevationSpinner = new NullableSpinner(rectangularElevationSpinnerModel);
+    rectangularElevationSpinnerModel.setNullable(controller.getRectangularElevation() == null);
+    rectangularElevationSpinnerModel.setLength(controller.getRectangularElevation());
+    rectangularElevationSpinnerModel.addChangeListener(new WallPanelChangeListener(this) {
+        public void doStateChanged(ChangeEvent ev) {
+            controller.setRectangularElevation(rectangularElevationSpinnerModel.getLength());
+          }
+      });
+    controller.addPropertyChangeListener(WallController.Property.RECTANGULAR_ELEVATION,
+        new ControllerPropertyChangeListener(this) {
+          public void controllerPropertyChange(PropertyChangeEvent ev) {
+            rectangularElevationSpinnerModel.setNullable(ev.getNewValue() == null);
+            rectangularElevationSpinnerModel.setLength((Float)ev.getNewValue());
+          }
+        });
+
+    // Create sloping elevation at start label and its spinner bound to SLOPING_ELEVATION_AT_START controller property
+    this.slopingElevationAtStartLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
+        WallPanel.class, "slopingElevationAtStartLabel.text"));
+    final NullableSpinner.NullableSpinnerLengthModel slopingElevationAtStartSpinnerModel =
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.0f, maximumLength);
+    this.slopingElevationAtStartSpinner = new NullableSpinner(slopingElevationAtStartSpinnerModel);
+    slopingElevationAtStartSpinnerModel.setNullable(controller.getSlopingElevationAtStart() == null);
+    slopingElevationAtStartSpinnerModel.setLength(controller.getSlopingElevationAtStart());
+    slopingElevationAtStartSpinnerModel.addChangeListener(new WallPanelChangeListener(this) {
+        public void doStateChanged(ChangeEvent ev) {
+          controller.setSlopingElevationAtStart(slopingElevationAtStartSpinnerModel.getLength());
+        }
+      });
+    controller.addPropertyChangeListener(WallController.Property.SLOPING_ELEVATION_AT_START,
+        new ControllerPropertyChangeListener(this) {
+          public void controllerPropertyChange(PropertyChangeEvent ev) {
+            slopingElevationAtStartSpinnerModel.setNullable(ev.getNewValue() == null);
+            slopingElevationAtStartSpinnerModel.setLength((Float)ev.getNewValue());
+          }
+        });
+
+    // Create sloping elevation at end label and its spinner bound to SLOPING_ELEVATION_AT_END controller property
+    this.slopingElevationAtEndLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
+        WallPanel.class, "slopingElevationAtEndLabel.text"));
+    final NullableSpinner.NullableSpinnerLengthModel slopingElevationAtEndSpinnerModel =
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.0f, maximumLength);
+    this.slopingElevationAtEndSpinner = new NullableSpinner(slopingElevationAtEndSpinnerModel);
+    slopingElevationAtEndSpinnerModel.setNullable(controller.getSlopingElevationAtEnd() == null);
+    slopingElevationAtEndSpinnerModel.setLength(controller.getSlopingElevationAtEnd());
+    slopingElevationAtEndSpinnerModel.addChangeListener(new WallPanelChangeListener(this) {
+        public void doStateChanged(ChangeEvent ev) {
+          controller.setSlopingElevationAtEnd(slopingElevationAtEndSpinnerModel.getLength());
+        }
+      });
+    controller.addPropertyChangeListener(WallController.Property.SLOPING_ELEVATION_AT_END,
+        new ControllerPropertyChangeListener(this) {
+          public void controllerPropertyChange(PropertyChangeEvent ev) {
+            slopingElevationAtEndSpinnerModel.setNullable(ev.getNewValue() == null);
+            slopingElevationAtEndSpinnerModel.setLength((Float)ev.getNewValue());
+          }
+        });
+
+    // Create floor attachment label and its check box bound to ATTACH_TO_FLOOR controller property
+    this.attachToFloorCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences,
+        WallPanel.class, "attachToFloorCheckBox.text"));
+    this.attachToFloorCheckBox.setNullable(controller.isAttachToFloor() == null);
+    this.attachToFloorCheckBox.setValue(controller.isAttachToFloor());
+    this.attachToFloorCheckBox.addChangeListener(new WallPanelChangeListener(this) {
+        public void doStateChanged(ChangeEvent ev) {
+          controller.setAttachToFloor(attachToFloorCheckBox.getValue());
+        }
+      });
+    controller.addPropertyChangeListener(WallController.Property.ATTACH_TO_FLOOR,
+        new ControllerPropertyChangeListener(this) {
+          public void controllerPropertyChange(PropertyChangeEvent ev) {
+            attachToFloorCheckBox.setNullable(ev.getNewValue() == null);
+            attachToFloorCheckBox.setValue((Boolean)ev.getNewValue());
+          }
+        });
+
     // Create thickness label and its spinner bound to THICKNESS controller property
     this.thicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         WallPanel.class, "thicknessLabel.text", unitName));
@@ -946,6 +1079,23 @@ public class WallPanel extends JPanel implements DialogView {
           preferences.getLocalizedString(WallPanel.class, "slopingWallHeightAtEndLabel.mnemonic")).getKeyCode());
       this.slopingWallHeightAtEndLabel.setLabelFor(this.slopingWallHeightAtEndSpinner);
 
+      this.rectangularElevationRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "rectangularElevationRadioButton.mnemonic")).getKeyCode());
+      this.rectangularElevationLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "rectangularElevationLabel.mnemonic")).getKeyCode());
+      this.rectangularElevationLabel.setLabelFor(this.rectangularElevationSpinner);
+      this.slopingElevationRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "slopingElevationRadioButton.mnemonic")).getKeyCode());
+      this.slopingElevationAtStartLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "slopingElevationAtStartLabel.mnemonic")).getKeyCode());
+      this.slopingElevationAtStartLabel.setLabelFor(this.slopingElevationAtStartSpinner);
+      this.slopingElevationAtEndLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "slopingElevationAtEndLabel.mnemonic")).getKeyCode());
+      this.slopingElevationAtEndLabel.setLabelFor(this.slopingElevationAtEndSpinner);
+
+      this.attachToFloorCheckBox.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "attachToFloorCheckBox.mnemonic")).getKeyCode());
+
       this.thicknessLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(WallPanel.class, "thicknessLabel.mnemonic")).getKeyCode());
       this.thicknessLabel.setLabelFor(this.thicknessSpinner);
@@ -1106,6 +1256,63 @@ public class WallPanel extends JPanel implements DialogView {
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
 
     // Sixth row
+    // Elevation panel
+    JPanel elevationPanel = SwingTools.createTitledPanel(
+        preferences.getLocalizedString(WallPanel.class, "elevationPanel.title"));
+    // GridBagConstraints(
+    //   int gridx, int gridy, int gridwidth, int gridheight, double weightx, double weighty, int anchor,
+    //   int fill, Insets insets, int ipadx, int ipady)
+    // First row of elevation panel
+    elevationPanel.add(this.attachToFloorCheckBox, new GridBagConstraints(
+        0, 0, 6, 1, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
+    // Second row of elevation panel (first column)
+    elevationPanel.add(this.rectangularElevationRadioButton, new GridBagConstraints(
+        0, 1, 3, 1, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
+    // Third row of elevation panel (first column)
+    // Add a dummy label to align radio buttons text
+    elevationPanel.add(new JLabel(), new GridBagConstraints(
+        0, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), new JRadioButton().getPreferredSize().width, 0));
+    // Third row of elevation panel (second column)
+    elevationPanel.add(this.rectangularElevationLabel, new GridBagConstraints(
+        1, 2, 1, 1, 1, 0, labelAlignment,
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
+    // Third row of elevation panel (third column)
+    elevationPanel.add(this.rectangularElevationSpinner, new GridBagConstraints(
+        2, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, standardGap), spinnerPadX, 0));
+    // Second row of elevation panel (fourth column)
+    elevationPanel.add(this.slopingElevationRadioButton, new GridBagConstraints(
+        3, 1, 3, 1, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.NONE, new Insets(0, 10, 2, 0), 0, 0));
+    // Third row of elevation panel (fourth column)
+    // Add a dummy label to align radio buttons text
+    elevationPanel.add(new JLabel(), new GridBagConstraints(
+        3, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), new JRadioButton().getPreferredSize().width, 0));
+    // Third row of elevation panel (fifth column)
+    elevationPanel.add(this.slopingElevationAtStartLabel, new GridBagConstraints(
+        4, 2, 1, 1, 1, 0, labelAlignment,
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
+    // Third row of elevation panel (sixth column)
+    elevationPanel.add(this.slopingElevationAtStartSpinner, new GridBagConstraints(
+        5, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), spinnerPadX, 0));
+    // Fourth row of elevation panel (fifth column)
+    elevationPanel.add(this.slopingElevationAtEndLabel, new GridBagConstraints(
+        4, 3, 1, 1, 1, 0, labelAlignment,
+        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
+    // Fourth row of elevation panel (sixth column)
+    elevationPanel.add(this.slopingElevationAtEndSpinner, new GridBagConstraints(
+        5, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), spinnerPadX, 0));
+    add(elevationPanel, new GridBagConstraints(
+        0, 5, 2, 1, 1, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
+
+    // Seventh row
     JPanel ticknessAndArcExtentPanel = new JPanel(new GridBagLayout());
     ticknessAndArcExtentPanel.add(this.thicknessLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment,
@@ -1120,12 +1327,12 @@ public class WallPanel extends JPanel implements DialogView {
         3, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     add(ticknessAndArcExtentPanel, new GridBagConstraints(
-        0, 5, 2, 1, 0, 0, GridBagConstraints.CENTER,
+        0, 6, 2, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.NONE, new Insets(standardGap, 8, 10, 8), 0, 0));
 
     // Last row
     add(this.wallOrientationLabel, new GridBagConstraints(
-        0, 6, 2, 1, 0, 0, GridBagConstraints.CENTER,
+        0, 7, 2, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 
     // Make startPointPanel and endPointPanel visible depending on editable points property
