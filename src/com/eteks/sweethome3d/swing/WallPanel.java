@@ -125,6 +125,8 @@ public class WallPanel extends JPanel implements DialogView {
   private JEditorPane          wallOrientationLabel;
   private String               dialogTitle;
 
+  private int                  suspendNotify;
+
   /**
    * Creates a panel that displays wall data according to the units set in
    * <code>preferences</code>.
@@ -1217,5 +1219,65 @@ public class WallPanel extends JPanel implements DialogView {
             this, this.dialogTitle, thicknessTextField) == JOptionPane.OK_OPTION) {
       this.controller.modifyWalls();
     }
+  }
+
+  private static abstract class ControllerPropertyChangeListener
+    implements PropertyChangeListener {
+
+    private final WallPanel wallPanel;
+
+    public ControllerPropertyChangeListener(WallPanel wallPanel) {
+      this.wallPanel = wallPanel;
+    }
+
+    @Override
+    public final void propertyChange(PropertyChangeEvent evt) {
+      wallPanel.suspendNotify++;
+      try {
+        this.controllerPropertyChange(evt);
+      } finally {
+        wallPanel.suspendNotify--;
+      }
+    }
+
+    public abstract void controllerPropertyChange(PropertyChangeEvent evt);
+  }
+
+  private static abstract class WallPanelChangeListener
+    implements ChangeListener {
+
+    private final WallPanel wallPanel;
+
+    public WallPanelChangeListener(WallPanel wallPanel) {
+      this.wallPanel = wallPanel;
+    }
+
+    @Override
+    public final void stateChanged(ChangeEvent ev) {
+      if (wallPanel.suspendNotify == 0) {
+        this.doStateChanged(ev);
+      }
+    }
+
+    public abstract void doStateChanged(ChangeEvent ev);
+  }
+
+  private static abstract class WallPanelPropertyChangeListener
+    implements PropertyChangeListener {
+
+    private final WallPanel wallPanel;
+
+    public WallPanelPropertyChangeListener(WallPanel wallPanel) {
+      this.wallPanel = wallPanel;
+    }
+
+    @Override
+    public final void propertyChange(PropertyChangeEvent evt) {
+      if (wallPanel.suspendNotify == 0) {
+        this.doPropertyChange(evt);
+      }
+    }
+
+    public abstract void doPropertyChange(PropertyChangeEvent evt);
   }
 }
