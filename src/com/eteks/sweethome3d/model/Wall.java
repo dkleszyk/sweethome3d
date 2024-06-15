@@ -429,6 +429,15 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
+   * Returns {@link #getHeight() getHeight} if it is not <code>null</code>,
+   * otherwise returns <code>defaultHeight</code>.
+   */
+  public float getHeightOrDefault(float defaultHeight) {
+    Float height = this.height;
+    return height != null ? height : defaultHeight;
+  }
+
+  /**
    * Sets the height of this wall. Once this wall is updated,
    * listeners added to this wall will receive a change notification.
    */
@@ -446,6 +455,15 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
    */
   public Float getHeightAtEnd() {
     return this.heightAtEnd;
+  }
+
+  /**
+   * Returns {@link #getHeightAtEnd() getHeightAtEnd} if it is not <code>null</code>,
+   * otherwise returns {@link #getHeightOrDefault(float) getHeightOrDefault}.
+   */
+  public float getHeightAtEndOrDefault(float defaultHeight) {
+    Float heightAtEnd = this.heightAtEnd;
+    return heightAtEnd != null ? heightAtEnd : getHeightOrDefault(defaultHeight);
   }
 
   /**
@@ -471,6 +489,15 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
+   * Returns {@link #getElevation() getElevation} if it is not <code>null</code>,
+   * otherwise returns <code>0.0f</code>.
+   */
+  public float getElevationOrDefault() {
+    Float elevation = this.elevation;
+    return elevation != null ? elevation : 0.0f;
+  }
+
+  /**
    * Sets the elevation of this wall. Once this wall is updated,
    * listeners added to this wall will receive a change notification.
    */
@@ -488,6 +515,15 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
    */
   public Float getElevationAtEnd() {
     return this.elevationAtEnd;
+  }
+
+  /**
+   * Returns {@link #getElevationAtEnd() getElevationAtEnd} if it is not <code>null</code>,
+   * otherwise returns {@link #getElevationOrDefault() getElevationOrDefault}.
+   */
+  public float getElevationAtEndOrDefault() {
+    Float elevationAtEnd = this.elevationAtEnd;
+    return elevationAtEnd != null ? elevationAtEnd : getElevationOrDefault();
   }
 
   /**

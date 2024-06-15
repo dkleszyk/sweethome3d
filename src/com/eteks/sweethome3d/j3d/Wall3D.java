@@ -278,9 +278,19 @@ public class Wall3D extends Object3DBranch {
     final float [] textureReferencePoint = wallSide == WALL_LEFT_SIDE
         ? wallSideOrBaseboardPoints [0].clone()
         : wallSideOrBaseboardPoints [wallSideOrBaseboardPoints.length - 1].clone();
-    final float wallElevation = getWallElevation(baseboard != null);
-    float topElevationAtStart;
-    float topElevationAtEnd;
+
+    // Compute start and end elevations
+    final float bottomElevationAtStart;
+    final float bottomElevationAtEnd;
+    if (baseboard == null) {
+      bottomElevationAtStart = getWallBottomElevationAtStart();
+      bottomElevationAtEnd = getWallBottomElevationAtEnd();
+    } else {
+      bottomElevationAtStart =
+      bottomElevationAtEnd = getWallElevation(true /*baseboard != null*/);
+    }
+    final float topElevationAtStart;
+    final float topElevationAtEnd;
     if (baseboard == null) {
       topElevationAtStart = getWallTopElevationAtStart();
       topElevationAtEnd = getWallTopElevationAtEnd();
@@ -288,6 +298,7 @@ public class Wall3D extends Object3DBranch {
       topElevationAtStart =
       topElevationAtEnd = getBaseboardTopElevation(baseboard);
     }
+    float minBottomElevation = Math.min(bottomElevationAtStart, bottomElevationAtEnd);
     float maxTopElevation = Math.max(topElevationAtStart, topElevationAtEnd);
 
     // Compute wall angles and top line factors
@@ -313,7 +324,7 @@ public class Wall3D extends Object3DBranch {
     List<HomePieceOfFurniture> intersectingDoorOrWindows = new ArrayList<HomePieceOfFurniture>();
     for (HomePieceOfFurniture piece : getVisibleDoorsAndWindows(getHome().getFurniture())) {
       float pieceElevation = piece.getGroundElevation();
-      if (pieceElevation + piece.getHeight() > wallElevation
+      if (pieceElevation + piece.getHeight() > minBottomElevation
           && pieceElevation < maxTopElevation) {
         Area pieceArea = new Area(getShape(piece.getPoints()));
         Area intersectionArea = new Area(wallShape);
@@ -347,7 +358,7 @@ public class Wall3D extends Object3DBranch {
             intersectionArea.intersect(pieceArea);
           }
           if (!intersectionArea.isEmpty()
-              && (!wall.isTrapezoidal()
+              && (topLineAlpha == 0
                   || pieceElevation < getMaxElevationAtWallIntersection(intersectionArea, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta))) {
             windowIntersections.add(new DoorOrWindowArea(intersectionArea, Arrays.asList(new HomePieceOfFurniture [] {piece})));
             intersectingDoorOrWindows.add(piece);
@@ -399,11 +410,11 @@ public class Wall3D extends Object3DBranch {
           if (points.size() > 2) {
             float [][] wallPartPoints = points.toArray(new float[points.size()][]);
             // Compute geometry for vertical part
-            sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, wallElevation,
+            sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, minBottomElevation,
                 cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, baseboard, texture,
                 textureReferencePoint, wallSide));
             // Compute geometry for bottom part
-            bottomGeometries.add(createHorizontalPartGeometry(wallPartPoints, wallElevation, true, roundWall));
+            bottomGeometries.add(createHorizontalPartGeometry(wallPartPoints, minBottomElevation, true, roundWall));
             // Compute geometry for top part
             topGeometries.add(createTopPartGeometry(wallPartPoints,
                 cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, roundWall));
@@ -454,17 +465,17 @@ public class Wall3D extends Object3DBranch {
               HomePieceOfFurniture lowestDoorOrWindow = doorsOrWindows.get(0);
               float lowestDoorOrWindowElevation = lowestDoorOrWindow.getGroundElevation();
               // Generate geometry for wall part below window
-              if (lowestDoorOrWindowElevation > wallElevation) {
+              if (lowestDoorOrWindowElevation > minBottomElevation) {
                 if (level != null
-                    && level.getElevation() != wallElevation
+                    && level.getElevation() != minBottomElevation
                     && lowestDoorOrWindow.getElevation() < LEVEL_ELEVATION_SHIFT) {
                   // Give more chance to an overlapping room floor to be displayed
                   lowestDoorOrWindowElevation -= LEVEL_ELEVATION_SHIFT;
                 }
-                sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, wallElevation,
+                sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, minBottomElevation,
                     cosWallYawAngle, sinWallYawAngle, 0, lowestDoorOrWindowElevation, baseboard, texture,
                     textureReferencePoint, wallSide));
-                bottomGeometries.add(createHorizontalPartGeometry(wallPartPoints, wallElevation, true, roundWall));
+                bottomGeometries.add(createHorizontalPartGeometry(wallPartPoints, minBottomElevation, true, roundWall));
                 sideGeometries.add(createHorizontalPartGeometry(wallPartPoints,
                     lowestDoorOrWindowElevation, false, roundWall));
               }
@@ -560,7 +571,7 @@ public class Wall3D extends Object3DBranch {
                   && (missingModels.size() == 0 || !waitDoorOrWindowModelsLoadingEnd)) {
                 createGeometriesSurroundingDoorOrWindow((HomeDoorOrWindow)doorOrWindow, rotatedModelsFrontAreas.get(rotatedModel), frontOrBackSide,
                     wall, sideGeometries, topGeometries,
-                    wallSideOrBaseboardPoints, wallElevation, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta,
+                    wallSideOrBaseboardPoints, minBottomElevation, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta,
                     texture, textureReferencePoint, wallSide);
               } else {
                 missingModels.add(doorOrWindow);
@@ -611,7 +622,7 @@ public class Wall3D extends Object3DBranch {
                   if (waitDoorOrWindowModelsLoadingEnd) {
                     createGeometriesSurroundingDoorOrWindow(doorOrWindow, frontArea, frontOrBackSide,
                         wall, sideGeometries, topGeometries,
-                        wallSideOrBaseboardPoints, wallElevation, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta,
+                        wallSideOrBaseboardPoints, minBottomElevation, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta,
                         texture, textureReferencePoint, wallSide);
                   } else {
                     missingModels.remove(doorOrWindow);
@@ -1284,18 +1295,37 @@ public class Wall3D extends Object3DBranch {
   }
 
   /**
+   * Returns the elevation of the wall bottom at its start.
+   */
+  private float getWallBottomElevationAtStart() {
+    Wall wall = (Wall)getUserData();
+    if (wall.isAttachToFloor()) {
+      return getWallElevation(false);
+    }
+    return getWallElevation(true) + wall.getElevationOrDefault();
+  }
+
+  /**
+   * Returns the elevation of the wall bottom at its start.
+   */
+  private float getWallBottomElevationAtEnd() {
+    Wall wall = (Wall)getUserData();
+    if (wall.isAttachToFloor()) {
+      return getWallElevation(false);
+    }
+    return getWallElevation(true) + wall.getElevationAtEndOrDefault();
+  }
+
+  /**
    * Returns the elevation of the wall top at its start.
    */
   private float getWallTopElevationAtStart() {
-    Float wallHeight = ((Wall)getUserData()).getHeight();
-    float wallHeightAtStart;
-    if (wallHeight != null) {
-      wallHeightAtStart = wallHeight + getWallElevation(false) + getFloorThicknessBottomWall();
-    } else {
-      // If wall height isn't set, use home wall height
-      wallHeightAtStart = getHome().getWallHeight() + getWallElevation(false) + getFloorThicknessBottomWall();
+    Wall wall = (Wall)getUserData();
+    float wallHeightAtStart = wall.getHeightOrDefault(getHome().getWallHeight());
+    if (wall.isAttachToFloor()) {
+      wallHeightAtStart += getFloorThicknessBottomWall();
     }
-    return wallHeightAtStart + getTopElevationShift();
+    return wallHeightAtStart + getWallBottomElevationAtStart() + getTopElevationShift();
   }
 
   private float getTopElevationShift() {
@@ -1315,12 +1345,11 @@ public class Wall3D extends Object3DBranch {
    */
   private float getWallTopElevationAtEnd() {
     Wall wall = (Wall)getUserData();
-    if (wall.isTrapezoidal()) {
-      return wall.getHeightAtEnd() + getWallElevation(false) + getFloorThicknessBottomWall() + getTopElevationShift();
-    } else {
-      // If the wall isn't trapezoidal, use same height as at wall start
-      return getWallTopElevationAtStart();
+    float wallHeightAtEnd = wall.getHeightAtEndOrDefault(getHome().getWallHeight());
+    if (wall.isAttachToFloor()) {
+      wallHeightAtEnd += getFloorThicknessBottomWall();
     }
+    return wallHeightAtEnd + getWallBottomElevationAtEnd() + getTopElevationShift();
   }
 
   /**
