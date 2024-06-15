@@ -1337,37 +1337,24 @@ public class Wall3D extends Object3DBranch {
     int [] indices = new int [(wallPoints.length + 1) * 2
                               + (leftSideBaseboard != null ? 8 : 4)
                               + (rightSideBaseboard != null ? 8 : 4)];
-    // Contour at bottom
     int j = 0, k = 0;
-    for (int i = 0; i < wallPoints.length; i++, j++) {
-      selectionCoordinates [j] = new Point3f(wallPointsIncludingBaseboards [i][0], wallElevation, wallPointsIncludingBaseboards [i][1]);
+
+    // Contour at bottom
+    ElevationPlane wallBottom = ElevationPlane.create(wall.getXStart(), wall.getYStart(),
+                                                      getWallBottomElevationAtStart(),
+                                                      wall.getXEnd(), wall.getYEnd(),
+                                                      getWallBottomElevationAtEnd());
+    for (int i = 0; i < wallPointsIncludingBaseboards.length; i++, j++) {
+      selectionCoordinates [j] = createCoordinateAtPoint(wallPointsIncludingBaseboards [i], wallBottom);
       indices [k++] = j;
     }
     indices [k++] = 0;
 
-    // Compute wall angles and top line factors to generate top contour
-    float topElevationAtStart = getWallTopElevationAtStart();
-    float topElevationAtEnd = getWallTopElevationAtEnd();
-    double wallYawAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), wall.getXEnd() - wall.getXStart());
-    final double cosWallYawAngle = Math.cos(wallYawAngle);
-    final double sinWallYawAngle = Math.sin(wallYawAngle);
-    double wallXStartWithZeroYaw = cosWallYawAngle * wall.getXStart() + sinWallYawAngle * wall.getYStart();
-    double wallXEndWithZeroYaw = cosWallYawAngle * wall.getXEnd() + sinWallYawAngle * wall.getYEnd();
-    final double topLineAlpha;
-    final double topLineBeta;
-    if (topElevationAtStart == topElevationAtEnd) {
-      topLineAlpha = 0;
-      topLineBeta = topElevationAtStart;
-    } else {
-      topLineAlpha = (topElevationAtEnd - topElevationAtStart) / (wallXEndWithZeroYaw - wallXStartWithZeroYaw);
-      topLineBeta = topElevationAtStart - topLineAlpha * wallXStartWithZeroYaw;
-    }
-
     // Contour at top
+    ElevationPlane wallTop = ElevationPlane.create(wall.getXStart(), wall.getYStart(), getWallTopElevationAtStart(),
+                                                   wall.getXEnd(), wall.getYEnd(), getWallTopElevationAtEnd());
     for (int i = 0; i < wallPoints.length; i++, j++) {
-      double xTopPointWithZeroYaw = cosWallYawAngle * wallPoints [i][0] + sinWallYawAngle * wallPoints [i][1];
-      float topY = (float)(topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
-      selectionCoordinates [j] = new Point3f(wallPoints [i][0], topY, wallPoints [i][1]);
+      selectionCoordinates [j] = createCoordinateAtPoint(wallPoints [i], wallTop);
       indices [k++] = j;
     }
     indices [k++] = wallPoints.length;
@@ -1376,36 +1363,44 @@ public class Wall3D extends Object3DBranch {
     indices [k++] = 0;
     if (leftSideBaseboard != null) {
       float leftBaseboardHeight = getBaseboardTopElevation(leftSideBaseboard);
-      selectionCoordinates [j] = new Point3f(wallPointsIncludingBaseboards [0][0], Math.min(leftBaseboardHeight, topElevationAtStart), wallPointsIncludingBaseboards [0][1]);
+      selectionCoordinates [j] = createClampedCoordinateAtPoint(wallPointsIncludingBaseboards [0], wallTop,
+                                                                Float.NEGATIVE_INFINITY, leftBaseboardHeight);
       indices [k++] = j++;
-      selectionCoordinates [j] = new Point3f(wallPoints [0][0], Math.min(leftBaseboardHeight, topElevationAtStart), wallPoints [0][1]);
+      selectionCoordinates [j] = createClampedCoordinateAtPoint(wallPoints [0], wallTop,
+                                                                Float.NEGATIVE_INFINITY, leftBaseboardHeight);
       indices [k++] = j++;
     }
     indices [k++] = wallPoints.length;
     indices [k++] = wallPoints.length / 2 - 1;
     if (leftSideBaseboard != null) {
       float leftBaseboardHeight = getBaseboardTopElevation(leftSideBaseboard);
-      selectionCoordinates [j] = new Point3f(wallPointsIncludingBaseboards [wallPoints.length / 2 - 1][0], Math.min(leftBaseboardHeight, topElevationAtEnd), wallPointsIncludingBaseboards [wallPoints.length / 2 - 1][1]);
+      selectionCoordinates [j] = createClampedCoordinateAtPoint(wallPointsIncludingBaseboards [wallPoints.length / 2 - 1], wallTop,
+                                                                Float.NEGATIVE_INFINITY, leftBaseboardHeight);
       indices [k++] = j++;
-      selectionCoordinates [j] = new Point3f(wallPoints [wallPoints.length / 2 - 1][0], Math.min(leftBaseboardHeight, topElevationAtEnd), wallPoints [wallPoints.length / 2 - 1][1]);
+      selectionCoordinates [j] = createClampedCoordinateAtPoint(wallPoints [wallPoints.length / 2 - 1], wallTop,
+                                                                Float.NEGATIVE_INFINITY, leftBaseboardHeight);
       indices [k++] = j++;
     }
     indices [k++] = wallPoints.length + wallPoints.length / 2 - 1;
     indices [k++] = wallPoints.length - 1;
     if (rightSideBaseboard != null) {
       float rightBaseboardHeight = getBaseboardTopElevation(rightSideBaseboard);
-      selectionCoordinates [j] = new Point3f(wallPointsIncludingBaseboards [wallPoints.length - 1][0], Math.min(rightBaseboardHeight, topElevationAtStart), wallPointsIncludingBaseboards [wallPoints.length - 1][1]);
+      selectionCoordinates [j] = createClampedCoordinateAtPoint(wallPointsIncludingBaseboards [wallPoints.length - 1], wallTop,
+                                                                Float.NEGATIVE_INFINITY, rightBaseboardHeight);
       indices [k++] = j++;
-      selectionCoordinates [j] = new Point3f(wallPoints [wallPoints.length - 1][0], Math.min(rightBaseboardHeight, topElevationAtStart), wallPoints [wallPoints.length - 1][1]);
+      selectionCoordinates [j] = createClampedCoordinateAtPoint(wallPoints [wallPoints.length - 1], wallTop,
+                                                                Float.NEGATIVE_INFINITY, rightBaseboardHeight);
       indices [k++] = j++;
     }
     indices [k++] = 2 * wallPoints.length - 1;
     indices [k++] = wallPoints.length / 2;
     if (rightSideBaseboard != null) {
       float rightBaseboardHeight = getBaseboardTopElevation(rightSideBaseboard);
-      selectionCoordinates [j] = new Point3f(wallPointsIncludingBaseboards [wallPoints.length / 2][0], Math.min(rightBaseboardHeight, topElevationAtEnd), wallPointsIncludingBaseboards [wallPoints.length / 2][1]);
+      selectionCoordinates [j] = createClampedCoordinateAtPoint(wallPointsIncludingBaseboards [wallPoints.length / 2], wallTop,
+                                                                Float.NEGATIVE_INFINITY, rightBaseboardHeight);
       indices [k++] = j++;
-      selectionCoordinates [j] = new Point3f(wallPoints [wallPoints.length / 2][0], Math.min(rightBaseboardHeight, topElevationAtEnd), wallPoints [wallPoints.length / 2][1]);
+      selectionCoordinates [j] = createClampedCoordinateAtPoint(wallPoints [wallPoints.length / 2], wallTop,
+                                                                Float.NEGATIVE_INFINITY, rightBaseboardHeight);
       indices [k++] = j++;
     }
     indices [k++] = wallPoints.length + wallPoints.length / 2;
@@ -1666,6 +1661,15 @@ public class Wall3D extends Object3DBranch {
    */
   private static Point3f createCoordinateAtPoint(float [] point, ElevationPlane plane) {
     return new Point3f(point [0], plane.getElevationAtPoint(point), point [1]);
+  }
+
+  /**
+   * Creates a 3d coordinate from a point and elevation plane, with a specified minimum and maximum elevation.
+   */
+  private static Point3f createClampedCoordinateAtPoint(float [] point, ElevationPlane plane,
+                                                        float minElevation, float maxElevation) {
+    float elevation = plane.getElevationAtPoint(point);
+    return new Point3f(point [0], Math.min(maxElevation, Math.max(minElevation, elevation)), point [1]);
   }
 
   /**
