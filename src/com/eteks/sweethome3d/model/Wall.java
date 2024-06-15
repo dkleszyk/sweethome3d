@@ -40,7 +40,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
                         THICKNESS, HEIGHT, HEIGHT_AT_END,
                         LEFT_SIDE_COLOR, LEFT_SIDE_TEXTURE, LEFT_SIDE_SHININESS, LEFT_SIDE_BASEBOARD,
                         RIGHT_SIDE_COLOR, RIGHT_SIDE_TEXTURE, RIGHT_SIDE_SHININESS, RIGHT_SIDE_BASEBOARD,
-                        PATTERN, TOP_COLOR, LEVEL}
+                        PATTERN, TOP_COLOR, LEVEL, ELEVATION, ELEVATION_AT_END, ATTACH_TO_FLOOR}
 
   private static final long serialVersionUID = 1L;
 
@@ -66,6 +66,9 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   private TextureImage        pattern;
   private Integer             topColor;
   private Level               level;
+  private Float               elevation;
+  private Float               elevationAtEnd;
+  private boolean             attachToFloor = true;
 
   private transient Shape      shapeCache;
   private transient float []   arcCircleCenterCache;
@@ -459,6 +462,67 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
+   * Returns the elevation of this wall. If {@link #getElevationAtEnd() getElevationAtEnd}
+   * returns a value not <code>null</code>, the returned elevation should be
+   * considered as the elevation of this wall at its start point.
+   */
+  public Float getElevation() {
+    return this.elevation;
+  }
+
+  /**
+   * Sets the elevation of this wall. Once this wall is updated,
+   * listeners added to this wall will receive a change notification.
+   */
+  public void setElevation(Float elevation) {
+    if (elevation != this.elevation
+        && (elevation == null || !elevation.equals(this.elevation))) {
+      Float oldElevation = this.elevation;
+      this.elevation = elevation;
+      firePropertyChange(Property.ELEVATION.name(), oldElevation, elevation);
+    }
+  }
+
+  /**
+   * Returns the elevation of this wall at its end point.
+   */
+  public Float getElevationAtEnd() {
+    return this.elevationAtEnd;
+  }
+
+  /**
+   * Sets the elevation of this wall at its end point. Once this wall is updated,
+   * listeners added to this wall will receive a change notification.
+   */
+  public void setElevationAtEnd(Float elevationAtEnd) {
+    if (elevationAtEnd != this.elevationAtEnd
+        && (elevationAtEnd == null || !elevationAtEnd.equals(this.elevationAtEnd))) {
+      Float oldElevationAtEnd = this.elevationAtEnd;
+      this.elevationAtEnd = elevationAtEnd;
+      firePropertyChange(Property.ELEVATION_AT_END.name(), oldElevationAtEnd, elevationAtEnd);
+    }
+  }
+
+  /**
+   * Returns whether this wall attaches to the floor.
+   */
+  public boolean isAttachToFloor() {
+    return this.attachToFloor;
+  }
+
+  /**
+   * Sets whether this wall attaches to the floor. Once this wall is updated,
+   * listeners added to this wall will receive a change notification.
+   */
+  public void setAttachToFloor(boolean attachToFloor) {
+    if (attachToFloor != this.attachToFloor) {
+      boolean oldAttachToFloor = this.attachToFloor;
+      this.attachToFloor = attachToFloor;
+      firePropertyChange(Property.ATTACH_TO_FLOOR.name(), oldAttachToFloor, attachToFloor);
+    }
+  }
+
+  /**
    * Returns <code>true</code> if the height of this wall is different
    * at its start and end points.
    */
@@ -466,6 +530,16 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
     return this.height != null
         && this.heightAtEnd != null
         && !this.height.equals(this.heightAtEnd);
+  }
+
+  /**
+   * Returns <code>true</code> if the elevation of this wall is different
+   * at its start and end points.
+   */
+  public boolean isElevationTrapezoidal() {
+    return this.elevation != null
+        && this.elevationAtEnd != null
+        && !this.elevation.equals(this.elevationAtEnd);
   }
 
   /**
