@@ -1308,7 +1308,7 @@ public class WallController implements Controller {
         setSlopingElevationAtEnd(this.initialSlopingElevationAtEnd);
       } else {
         setSlopingElevationAtEnd(null);
-      } // else null
+      }
     }
   }
 
