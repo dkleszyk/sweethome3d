@@ -1296,8 +1296,7 @@ public class WallController implements Controller {
    * Sets whether the edited wall elevation is rectangular, sloping, or unknown.
    */
   public void setElevationShape(WallShape elevationShape) {
-    if (elevationShape != this.elevationShape
-        && (elevationShape == null || !elevationShape.equals(this.elevationShape))) {
+    if (elevationShape != this.elevationShape) {
       WallShape oldElevationShape = this.elevationShape;
       this.elevationShape = elevationShape;
       this.propertyChangeSupport.firePropertyChange(Property.ELEVATION_SHAPE.name(),
@@ -1404,8 +1403,7 @@ public class WallController implements Controller {
    * Sets the edited floor attachment.
    */
   public void setAttachToFloor(Boolean attachToFloor) {
-    if (attachToFloor != this.attachToFloor
-        && (attachToFloor == null || !attachToFloor.equals(this.attachToFloor))) {
+    if (attachToFloor != this.attachToFloor) {
       Boolean oldAttachToFloor = this.attachToFloor;
       this.attachToFloor = attachToFloor;
       this.propertyChangeSupport.firePropertyChange(Property.ATTACH_TO_FLOOR.name(),
