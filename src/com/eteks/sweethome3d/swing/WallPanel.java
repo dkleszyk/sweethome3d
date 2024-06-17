@@ -1227,54 +1227,59 @@ public class WallPanel extends JPanel implements DialogView {
     // Elevation panel
     JPanel elevationPanel = SwingTools.createTitledPanel(
         preferences.getLocalizedString(WallPanel.class, "elevationPanel.title"));
+    JPanel elevationPanelInner = new JPanel(new GridBagLayout());
     // GridBagConstraints(
     //   int gridx, int gridy, int gridwidth, int gridheight, double weightx, double weighty, int anchor,
     //   int fill, Insets insets, int ipadx, int ipady)
     // First row of elevation panel
     elevationPanel.add(this.floatingWallCheckBox, new GridBagConstraints(
-        0, 0, 6, 1, 0, 0, GridBagConstraints.LINE_START,
+        0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
+    // Second row of elevation panel
+    elevationPanel.add(elevationPanelInner, new GridBagConstraints(
+        0, 1, 1, 3, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     // Second row of elevation panel (first column)
-    elevationPanel.add(this.rectangularElevationRadioButton, new GridBagConstraints(
-        0, 1, 3, 1, 0, 0, GridBagConstraints.LINE_START,
+    elevationPanelInner.add(this.rectangularElevationRadioButton, new GridBagConstraints(
+        0, 0, 3, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
     // Third row of elevation panel (first column)
     // Add a dummy label to align radio buttons text
-    elevationPanel.add(new JLabel(), new GridBagConstraints(
-        0, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+    elevationPanelInner.add(new JLabel(), new GridBagConstraints(
+        0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), new JRadioButton().getPreferredSize().width, 0));
     // Third row of elevation panel (second column)
-    elevationPanel.add(this.rectangularElevationLabel, new GridBagConstraints(
-        1, 2, 1, 1, 1, 0, labelAlignment,
+    elevationPanelInner.add(this.rectangularElevationLabel, new GridBagConstraints(
+        1, 1, 1, 1, 1, 0, labelAlignment,
         GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     // Third row of elevation panel (third column)
-    elevationPanel.add(this.rectangularElevationSpinner, new GridBagConstraints(
-        2, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
+    elevationPanelInner.add(this.rectangularElevationSpinner, new GridBagConstraints(
+        2, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, standardGap), spinnerPadX, 0));
     // Second row of elevation panel (fourth column)
-    elevationPanel.add(this.slopingElevationRadioButton, new GridBagConstraints(
-        3, 1, 3, 1, 0, 0, GridBagConstraints.LINE_START,
+    elevationPanelInner.add(this.slopingElevationRadioButton, new GridBagConstraints(
+        3, 0, 3, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 10, 2, 0), 0, 0));
     // Third row of elevation panel (fourth column)
     // Add a dummy label to align radio buttons text
-    elevationPanel.add(new JLabel(), new GridBagConstraints(
-        3, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+    elevationPanelInner.add(new JLabel(), new GridBagConstraints(
+        3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), new JRadioButton().getPreferredSize().width, 0));
     // Third row of elevation panel (fifth column)
-    elevationPanel.add(this.slopingElevationAtStartLabel, new GridBagConstraints(
-        4, 2, 1, 1, 1, 0, labelAlignment,
+    elevationPanelInner.add(this.slopingElevationAtStartLabel, new GridBagConstraints(
+        4, 1, 1, 1, 1, 0, labelAlignment,
         GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     // Third row of elevation panel (sixth column)
-    elevationPanel.add(this.slopingElevationAtStartSpinner, new GridBagConstraints(
-        5, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
+    elevationPanelInner.add(this.slopingElevationAtStartSpinner, new GridBagConstraints(
+        5, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), spinnerPadX, 0));
     // Fourth row of elevation panel (fifth column)
-    elevationPanel.add(this.slopingElevationAtEndLabel, new GridBagConstraints(
-        4, 3, 1, 1, 1, 0, labelAlignment,
+    elevationPanelInner.add(this.slopingElevationAtEndLabel, new GridBagConstraints(
+        4, 2, 1, 1, 1, 0, labelAlignment,
         GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     // Fourth row of elevation panel (sixth column)
-    elevationPanel.add(this.slopingElevationAtEndSpinner, new GridBagConstraints(
-        5, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START,
+    elevationPanelInner.add(this.slopingElevationAtEndSpinner, new GridBagConstraints(
+        5, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), spinnerPadX, 0));
     add(elevationPanel, new GridBagConstraints(
         0, 5, 2, 1, 1, 0, GridBagConstraints.LINE_START,
@@ -1317,6 +1322,15 @@ public class WallPanel extends JPanel implements DialogView {
     endPointPanel.setVisible(controller.isEditablePoints());
     this.arcExtentLabel.setVisible(controller.isEditablePoints());
     this.arcExtentSpinner.setVisible(controller.isEditablePoints());
+
+    // Make elevationPanelInner visible depending on floor attachment property
+    controller.addPropertyChangeListener(WallController.Property.ATTACH_TO_FLOOR,
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            elevationPanelInner.setVisible(Boolean.FALSE.equals(controller.isAttachToFloor()));
+          }
+        });
+    elevationPanelInner.setVisible(Boolean.FALSE.equals(controller.isAttachToFloor()));
   }
 
   private JPanel createTitledPanel(String title, JComponent [] components, boolean horizontal) {
