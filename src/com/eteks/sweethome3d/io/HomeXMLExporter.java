@@ -611,7 +611,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
             writer.writeFloatAttribute("elevationAtEnd", wall.getElevationAtEnd());
           }
           if (!wall.isAttachToFloor()) {
-            writer.writeAttribute("attachToFloor", String.valueOf(false));
+            writer.writeAttribute("floating", String.valueOf(true));
           }
           writer.writeFloatAttribute("thickness", wall.getThickness());
           writer.writeFloatAttribute("arcExtent", wall.getArcExtent());

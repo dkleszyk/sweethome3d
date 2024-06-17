@@ -122,7 +122,7 @@ public class WallPanel extends JPanel implements DialogView {
   private JSpinner             thicknessSpinner;
   private JLabel               arcExtentLabel;
   private JSpinner             arcExtentSpinner;
-  private NullableCheckBox     attachToFloorCheckBox;
+  private NullableCheckBox     floatingWallCheckBox;
   private JRadioButton         rectangularElevationRadioButton;
   private JLabel               rectangularElevationLabel;
   private JSpinner             rectangularElevationSpinner;
@@ -785,20 +785,20 @@ public class WallPanel extends JPanel implements DialogView {
         });
 
     // Create floor attachment label and its check box bound to ATTACH_TO_FLOOR controller property
-    this.attachToFloorCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences,
-        WallPanel.class, "attachToFloorCheckBox.text"));
-    this.attachToFloorCheckBox.setNullable(controller.isAttachToFloor() == null);
-    this.attachToFloorCheckBox.setValue(controller.isAttachToFloor());
-    this.attachToFloorCheckBox.addChangeListener(new WallPanelChangeListener(this) {
+    this.floatingWallCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences,
+        WallPanel.class, "floatingWallCheckBox.text"));
+    this.floatingWallCheckBox.setNullable(controller.isAttachToFloor() == null);
+    this.floatingWallCheckBox.setValue(logicalNot(controller.isAttachToFloor()));
+    this.floatingWallCheckBox.addChangeListener(new WallPanelChangeListener(this) {
         public void doStateChanged(ChangeEvent ev) {
-          controller.setAttachToFloor(attachToFloorCheckBox.getValue());
+          controller.setAttachToFloor(logicalNot(floatingWallCheckBox.getValue()));
         }
       });
     controller.addPropertyChangeListener(WallController.Property.ATTACH_TO_FLOOR,
         new ControllerPropertyChangeListener(this) {
           public void controllerPropertyChange(PropertyChangeEvent ev) {
-            attachToFloorCheckBox.setNullable(ev.getNewValue() == null);
-            attachToFloorCheckBox.setValue((Boolean)ev.getNewValue());
+            floatingWallCheckBox.setNullable(ev.getNewValue() == null);
+            floatingWallCheckBox.setValue(logicalNot((Boolean)ev.getNewValue()));
           }
         });
 
@@ -1061,8 +1061,8 @@ public class WallPanel extends JPanel implements DialogView {
           preferences.getLocalizedString(WallPanel.class, "slopingElevationAtEndLabel.mnemonic")).getKeyCode());
       this.slopingElevationAtEndLabel.setLabelFor(this.slopingElevationAtEndSpinner);
 
-      this.attachToFloorCheckBox.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "attachToFloorCheckBox.mnemonic")).getKeyCode());
+      this.floatingWallCheckBox.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "floatingWallCheckBox.mnemonic")).getKeyCode());
 
       this.thicknessLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
           preferences.getLocalizedString(WallPanel.class, "thicknessLabel.mnemonic")).getKeyCode());
@@ -1231,7 +1231,7 @@ public class WallPanel extends JPanel implements DialogView {
     //   int gridx, int gridy, int gridwidth, int gridheight, double weightx, double weighty, int anchor,
     //   int fill, Insets insets, int ipadx, int ipady)
     // First row of elevation panel
-    elevationPanel.add(this.attachToFloorCheckBox, new GridBagConstraints(
+    elevationPanel.add(this.floatingWallCheckBox, new GridBagConstraints(
         0, 0, 6, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
     // Second row of elevation panel (first column)
@@ -1454,5 +1454,9 @@ public class WallPanel extends JPanel implements DialogView {
     }
 
     public abstract void doPropertyChange(PropertyChangeEvent evt);
+  }
+
+  private static Boolean logicalNot(Boolean b) {
+    return b == null ? null : !((boolean)b);
   }
 }

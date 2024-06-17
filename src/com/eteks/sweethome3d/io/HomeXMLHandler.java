@@ -1491,7 +1491,7 @@ public class HomeXMLHandler extends DefaultHandler {
     wall.setHeightAtEnd(parseOptionalFloat(attributes, "heightAtEnd"));
     wall.setElevation(parseOptionalFloat(attributes, "elevation"));
     wall.setElevationAtEnd(parseOptionalFloat(attributes, "elevationAtEnd"));
-    wall.setAttachToFloor(!"false".equals(attributes.get("attachToFloor")));
+    wall.setAttachToFloor(!"true".equals(attributes.get("floating")));
     wall.setArcExtent(parseOptionalFloat(attributes, "arcExtent"));
     wall.setTopColor(parseOptionalColor(attributes, "topColor"));
     wall.setLeftSideColor(parseOptionalColor(attributes, "leftSideColor"));
