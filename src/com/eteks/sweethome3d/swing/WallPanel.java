@@ -1306,6 +1306,9 @@ public class WallPanel extends JPanel implements DialogView {
         0, 8, 2, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 
+    // Self-reference for closures
+    final WallPanel wallPanel = this;
+
     // Make startPointPanel and endPointPanel visible depending on editable points property
     controller.addPropertyChangeListener(WallController.Property.EDITABLE_POINTS,
         new PropertyChangeListener() {
@@ -1314,6 +1317,13 @@ public class WallPanel extends JPanel implements DialogView {
             endPointPanel.setVisible(controller.isEditablePoints());
             arcExtentLabel.setVisible(controller.isEditablePoints());
             arcExtentSpinner.setVisible(controller.isEditablePoints());
+
+            final Window window = SwingUtilities.getWindowAncestor(wallPanel);
+            if (window != null) {
+              window.pack();
+              window.revalidate();
+              window.repaint();
+            }
           }
         });
     startPointPanel.setVisible(controller.isEditablePoints());
@@ -1322,12 +1332,12 @@ public class WallPanel extends JPanel implements DialogView {
     this.arcExtentSpinner.setVisible(controller.isEditablePoints());
 
     // Make elevationPanel visible depending on floor attachment property
-    final WallPanel _this = this;
     controller.addPropertyChangeListener(WallController.Property.ATTACH_TO_FLOOR,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             elevationPanel.setVisible(!Boolean.TRUE.equals(ev.getNewValue()));
-            final Window window = SwingUtilities.getWindowAncestor(_this);
+
+            final Window window = SwingUtilities.getWindowAncestor(wallPanel);
             if (window != null) {
               window.pack();
               window.revalidate();
