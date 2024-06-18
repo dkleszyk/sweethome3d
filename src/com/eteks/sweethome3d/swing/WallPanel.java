@@ -29,6 +29,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.MouseInfo;
 import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -1224,68 +1225,65 @@ public class WallPanel extends JPanel implements DialogView {
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
 
     // Sixth row
-    // Elevation panel
-    JPanel elevationPanel = SwingTools.createTitledPanel(
-        preferences.getLocalizedString(WallPanel.class, "elevationPanel.title"));
-    JPanel elevationPanelInner = new JPanel(new GridBagLayout());
-    // GridBagConstraints(
-    //   int gridx, int gridy, int gridwidth, int gridheight, double weightx, double weighty, int anchor,
-    //   int fill, Insets insets, int ipadx, int ipady)
-    // First row of elevation panel
-    elevationPanel.add(this.floatingWallCheckBox, new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
-    // Second row of elevation panel
-    elevationPanel.add(elevationPanelInner, new GridBagConstraints(
-        0, 1, 1, 3, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    // Second row of elevation panel (first column)
-    elevationPanelInner.add(this.rectangularElevationRadioButton, new GridBagConstraints(
-        0, 0, 3, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
-    // Third row of elevation panel (first column)
-    // Add a dummy label to align radio buttons text
-    elevationPanelInner.add(new JLabel(), new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), new JRadioButton().getPreferredSize().width, 0));
-    // Third row of elevation panel (second column)
-    elevationPanelInner.add(this.rectangularElevationLabel, new GridBagConstraints(
-        1, 1, 1, 1, 1, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
-    // Third row of elevation panel (third column)
-    elevationPanelInner.add(this.rectangularElevationSpinner, new GridBagConstraints(
-        2, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, standardGap), spinnerPadX, 0));
-    // Second row of elevation panel (fourth column)
-    elevationPanelInner.add(this.slopingElevationRadioButton, new GridBagConstraints(
-        3, 0, 3, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 10, 2, 0), 0, 0));
-    // Third row of elevation panel (fourth column)
-    // Add a dummy label to align radio buttons text
-    elevationPanelInner.add(new JLabel(), new GridBagConstraints(
-        3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), new JRadioButton().getPreferredSize().width, 0));
-    // Third row of elevation panel (fifth column)
-    elevationPanelInner.add(this.slopingElevationAtStartLabel, new GridBagConstraints(
-        4, 1, 1, 1, 1, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
-    // Third row of elevation panel (sixth column)
-    elevationPanelInner.add(this.slopingElevationAtStartSpinner, new GridBagConstraints(
-        5, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), spinnerPadX, 0));
-    // Fourth row of elevation panel (fifth column)
-    elevationPanelInner.add(this.slopingElevationAtEndLabel, new GridBagConstraints(
-        4, 2, 1, 1, 1, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
-    // Fourth row of elevation panel (sixth column)
-    elevationPanelInner.add(this.slopingElevationAtEndSpinner, new GridBagConstraints(
-        5, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), spinnerPadX, 0));
-    add(elevationPanel, new GridBagConstraints(
-        0, 5, 2, 1, 1, 0, GridBagConstraints.LINE_START,
+    // Floating wall check box
+    add(this.floatingWallCheckBox, new GridBagConstraints(
+        0, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
 
     // Seventh row
+    // Elevation panel
+    JPanel elevationPanel = SwingTools.createTitledPanel(
+        preferences.getLocalizedString(WallPanel.class, "elevationPanel.title"));
+    // GridBagConstraints(
+    //   int gridx, int gridy, int gridwidth, int gridheight, double weightx, double weighty, int anchor,
+    //   int fill, Insets insets, int ipadx, int ipady)
+    // First row of elevation panel (first column)
+    elevationPanel.add(this.rectangularElevationRadioButton, new GridBagConstraints(
+        0, 0, 3, 1, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
+    // Second row of elevation panel (first column)
+    // Add a dummy label to align radio buttons text
+    elevationPanel.add(new JLabel(), new GridBagConstraints(
+        0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), new JRadioButton().getPreferredSize().width, 0));
+    // Second row of elevation panel (second column)
+    elevationPanel.add(this.rectangularElevationLabel, new GridBagConstraints(
+        1, 1, 1, 1, 1, 0, labelAlignment,
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
+    // Second row of elevation panel (third column)
+    elevationPanel.add(this.rectangularElevationSpinner, new GridBagConstraints(
+        2, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, standardGap), spinnerPadX, 0));
+    // First row of elevation panel (fourth column)
+    elevationPanel.add(this.slopingElevationRadioButton, new GridBagConstraints(
+        3, 0, 3, 1, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.NONE, new Insets(0, 10, 2, 0), 0, 0));
+    // Second row of elevation panel (fourth column)
+    // Add a dummy label to align radio buttons text
+    elevationPanel.add(new JLabel(), new GridBagConstraints(
+        3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), new JRadioButton().getPreferredSize().width, 0));
+    // Second row of elevation panel (fifth column)
+    elevationPanel.add(this.slopingElevationAtStartLabel, new GridBagConstraints(
+        4, 1, 1, 1, 1, 0, labelAlignment,
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
+    // Second row of elevation panel (sixth column)
+    elevationPanel.add(this.slopingElevationAtStartSpinner, new GridBagConstraints(
+        5, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), spinnerPadX, 0));
+    // Third row of elevation panel (fifth column)
+    elevationPanel.add(this.slopingElevationAtEndLabel, new GridBagConstraints(
+        4, 2, 1, 1, 1, 0, labelAlignment,
+        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
+    // Third row of elevation panel (sixth column)
+    elevationPanel.add(this.slopingElevationAtEndSpinner, new GridBagConstraints(
+        5, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), spinnerPadX, 0));
+    add(elevationPanel, new GridBagConstraints(
+        0, 6, 2, 1, 1, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
+
+    // Eighth row
     JPanel ticknessAndArcExtentPanel = new JPanel(new GridBagLayout());
     ticknessAndArcExtentPanel.add(this.thicknessLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment,
@@ -1300,12 +1298,12 @@ public class WallPanel extends JPanel implements DialogView {
         3, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     add(ticknessAndArcExtentPanel, new GridBagConstraints(
-        0, 6, 2, 1, 0, 0, GridBagConstraints.CENTER,
+        0, 7, 2, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.NONE, new Insets(standardGap, 8, 10, 8), 0, 0));
 
     // Last row
     add(this.wallOrientationLabel, new GridBagConstraints(
-        0, 7, 2, 1, 0, 0, GridBagConstraints.CENTER,
+        0, 8, 2, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 
     // Make startPointPanel and endPointPanel visible depending on editable points property
@@ -1323,14 +1321,21 @@ public class WallPanel extends JPanel implements DialogView {
     this.arcExtentLabel.setVisible(controller.isEditablePoints());
     this.arcExtentSpinner.setVisible(controller.isEditablePoints());
 
-    // Make elevationPanelInner visible depending on floor attachment property
+    // Make elevationPanel visible depending on floor attachment property
+    final WallPanel _this = this;
     controller.addPropertyChangeListener(WallController.Property.ATTACH_TO_FLOOR,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            elevationPanelInner.setVisible(Boolean.FALSE.equals(controller.isAttachToFloor()));
+            elevationPanel.setVisible(!Boolean.TRUE.equals(ev.getNewValue()));
+            final Window window = SwingUtilities.getWindowAncestor(_this);
+            if (window != null) {
+              window.pack();
+              window.revalidate();
+              window.repaint();
+            }
           }
         });
-    elevationPanelInner.setVisible(Boolean.FALSE.equals(controller.isAttachToFloor()));
+    elevationPanel.setVisible(!Boolean.TRUE.equals(controller.isAttachToFloor()));
   }
 
   private JPanel createTitledPanel(String title, JComponent [] components, boolean horizontal) {
