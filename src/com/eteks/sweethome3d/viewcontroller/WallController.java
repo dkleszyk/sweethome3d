@@ -1303,8 +1303,12 @@ public class WallController implements Controller {
           oldElevationShape, elevationShape);
 
       if (elevationShape == WallShape.SLOPING_WALL) {
-        assert getSlopingElevationAtEnd() == null;
-        setSlopingElevationAtEnd(this.initialSlopingElevationAtEnd);
+        // getSlopingElevationAtEnd can be non-null
+        // if setElevationShape is being called from
+        // setSlopingElevationAtEnd after user input
+        if (getSlopingElevationAtEnd() == null) {
+          setSlopingElevationAtEnd(this.initialSlopingElevationAtEnd);
+        }
       } else {
         setSlopingElevationAtEnd(null);
       }
