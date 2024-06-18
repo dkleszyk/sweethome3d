@@ -40,7 +40,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
                         THICKNESS, HEIGHT, HEIGHT_AT_END,
                         LEFT_SIDE_COLOR, LEFT_SIDE_TEXTURE, LEFT_SIDE_SHININESS, LEFT_SIDE_BASEBOARD,
                         RIGHT_SIDE_COLOR, RIGHT_SIDE_TEXTURE, RIGHT_SIDE_SHININESS, RIGHT_SIDE_BASEBOARD,
-                        PATTERN, TOP_COLOR, LEVEL}
+                        PATTERN, TOP_COLOR, LEVEL, ELEVATION, ELEVATION_AT_END, FLOATING}
 
   private static final long serialVersionUID = 1L;
 
@@ -66,6 +66,9 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   private TextureImage        pattern;
   private Integer             topColor;
   private Level               level;
+  private Float               elevation;
+  private Float               elevationAtEnd;
+  private boolean             floating;
 
   private transient Shape      shapeCache;
   private transient float []   arcCircleCenterCache;
@@ -426,6 +429,15 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
+   * Returns {@link #getHeight() getHeight} if it is not <code>null</code>,
+   * otherwise returns <code>defaultHeight</code>.
+   */
+  public float getHeightOrDefault(float defaultHeight) {
+    Float height = this.height;
+    return height != null ? height : defaultHeight;
+  }
+
+  /**
    * Sets the height of this wall. Once this wall is updated,
    * listeners added to this wall will receive a change notification.
    */
@@ -446,6 +458,15 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
+   * Returns {@link #getHeightAtEnd() getHeightAtEnd} if it is not <code>null</code>,
+   * otherwise returns {@link #getHeightOrDefault(float) getHeightOrDefault}.
+   */
+  public float getHeightAtEndOrDefault(float defaultHeight) {
+    Float heightAtEnd = this.heightAtEnd;
+    return heightAtEnd != null ? heightAtEnd : getHeightOrDefault(defaultHeight);
+  }
+
+  /**
    * Sets the height of this wall at its end point. Once this wall is updated,
    * listeners added to this wall will receive a change notification.
    */
@@ -459,6 +480,85 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
+   * Returns the elevation of this wall. If {@link #getElevationAtEnd() getElevationAtEnd}
+   * returns a value not <code>null</code>, the returned elevation should be
+   * considered as the elevation of this wall at its start point.
+   */
+  public Float getElevation() {
+    return this.elevation;
+  }
+
+  /**
+   * Returns {@link #getElevation() getElevation} if it is not <code>null</code>,
+   * otherwise returns <code>0.0f</code>.
+   */
+  public float getElevationOrDefault() {
+    Float elevation = this.elevation;
+    return elevation != null ? elevation : 0.0f;
+  }
+
+  /**
+   * Sets the elevation of this wall. Once this wall is updated,
+   * listeners added to this wall will receive a change notification.
+   */
+  public void setElevation(Float elevation) {
+    if (elevation != this.elevation
+        && (elevation == null || !elevation.equals(this.elevation))) {
+      Float oldElevation = this.elevation;
+      this.elevation = elevation;
+      firePropertyChange(Property.ELEVATION.name(), oldElevation, elevation);
+    }
+  }
+
+  /**
+   * Returns the elevation of this wall at its end point.
+   */
+  public Float getElevationAtEnd() {
+    return this.elevationAtEnd;
+  }
+
+  /**
+   * Returns {@link #getElevationAtEnd() getElevationAtEnd} if it is not <code>null</code>,
+   * otherwise returns {@link #getElevationOrDefault() getElevationOrDefault}.
+   */
+  public float getElevationAtEndOrDefault() {
+    Float elevationAtEnd = this.elevationAtEnd;
+    return elevationAtEnd != null ? elevationAtEnd : getElevationOrDefault();
+  }
+
+  /**
+   * Sets the elevation of this wall at its end point. Once this wall is updated,
+   * listeners added to this wall will receive a change notification.
+   */
+  public void setElevationAtEnd(Float elevationAtEnd) {
+    if (elevationAtEnd != this.elevationAtEnd
+        && (elevationAtEnd == null || !elevationAtEnd.equals(this.elevationAtEnd))) {
+      Float oldElevationAtEnd = this.elevationAtEnd;
+      this.elevationAtEnd = elevationAtEnd;
+      firePropertyChange(Property.ELEVATION_AT_END.name(), oldElevationAtEnd, elevationAtEnd);
+    }
+  }
+
+  /**
+   * Returns whether this wall is detached from the floor.
+   */
+  public boolean isFloating() {
+    return this.floating;
+  }
+
+  /**
+   * Sets whether this wall is detached from the floor. Once this wall is updated,
+   * listeners added to this wall will receive a change notification.
+   */
+  public void setFloating(boolean floating) {
+    if (floating != this.floating) {
+      boolean oldFloating = this.floating;
+      this.floating = floating;
+      firePropertyChange(Property.FLOATING.name(), oldFloating, floating);
+    }
+  }
+
+  /**
    * Returns <code>true</code> if the height of this wall is different
    * at its start and end points.
    */
@@ -466,6 +566,16 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
     return this.height != null
         && this.heightAtEnd != null
         && !this.height.equals(this.heightAtEnd);
+  }
+
+  /**
+   * Returns <code>true</code> if the elevation of this wall is different
+   * at its start and end points.
+   */
+  public boolean isElevationTrapezoidal() {
+    return this.elevation != null
+        && this.elevationAtEnd != null
+        && !this.elevation.equals(this.elevationAtEnd);
   }
 
   /**

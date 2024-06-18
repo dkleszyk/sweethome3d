@@ -1820,6 +1820,11 @@ public class PlanController extends FurnitureController implements Controller {
         firstWall.setHeightAtEnd(heightAtMiddle);
         secondWall.setHeight(heightAtMiddle);
       }
+      if (splitWall.getElevationAtEnd() != null) {
+        Float elevationAtMiddle = (splitWall.getElevation() + splitWall.getElevationAtEnd()) / 2;
+        firstWall.setElevationAtEnd(elevationAtMiddle);
+        secondWall.setElevation(elevationAtMiddle);
+      }
 
       firstWall.setWallAtEnd(secondWall);
       secondWall.setWallAtStart(firstWall);
@@ -2472,6 +2477,9 @@ public class PlanController extends FurnitureController implements Controller {
               || Wall.Property.LEVEL.name().equals(propertyName)
               || Wall.Property.HEIGHT.name().equals(propertyName)
               || Wall.Property.HEIGHT_AT_END.name().equals(propertyName)
+              || Wall.Property.ELEVATION.name().equals(propertyName)
+              || Wall.Property.ELEVATION_AT_END.name().equals(propertyName)
+              || Wall.Property.FLOATING.name().equals(propertyName)
               || Wall.Property.LEFT_SIDE_BASEBOARD.name().equals(propertyName)
               || Wall.Property.RIGHT_SIDE_BASEBOARD.name().equals(propertyName)) {
             resetAreaCache();
@@ -8567,7 +8575,7 @@ public class PlanController extends FurnitureController implements Controller {
       Area wallsArea = new Area();
       Level selectedLevel = this.home.getSelectedLevel();
       for (Wall wall : this.home.getWalls()) {
-        if (wall.isAtLevel(selectedLevel)) {
+        if (wall.isAtLevel(selectedLevel) && !wall.isFloating()) {
           wallsArea.add(new Area(getPath(wall.getPoints(includeBaseboards))));
         }
       }

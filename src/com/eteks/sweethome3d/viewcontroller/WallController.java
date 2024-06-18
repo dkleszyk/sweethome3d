@@ -52,7 +52,8 @@ public class WallController implements Controller {
       RIGHT_SIDE_COLOR, RIGHT_SIDE_PAINT, RIGHT_SIDE_SHININESS,
       PATTERN, TOP_COLOR, TOP_PAINT,
       SHAPE, RECTANGULAR_WALL_HEIGHT, SLOPING_WALL_HEIGHT_AT_START, SLOPING_WALL_HEIGHT_AT_END,
-      THICKNESS, ARC_EXTENT_IN_DEGREES}
+      THICKNESS, ARC_EXTENT_IN_DEGREES, FLOATING, ELEVATION_SHAPE,
+      RECTANGULAR_ELEVATION, SLOPING_ELEVATION_AT_START, SLOPING_ELEVATION_AT_END}
   /**
    * The possible values for {@linkplain #getShape() wall shape}.
    */
@@ -93,9 +94,15 @@ public class WallController implements Controller {
   private WallShape    shape;
   private Float        rectangularWallHeight;
   private Float        slopingWallHeightAtStart;
-  private Float        sloppingWallHeightAtEnd;
+  private Float        slopingWallHeightAtEnd;
   private Float        thickness;
   private Float        arcExtentInDegrees;
+  private Boolean      floating;
+  private WallShape    elevationShape;
+  private Float        rectangularElevation;
+  private Float        slopingElevationAtStart;
+  private Float        slopingElevationAtEnd;
+  private Float        initialSlopingElevationAtEnd;
 
   /**
    * Creates the controller of wall view with undo support.
@@ -143,6 +150,14 @@ public class WallController implements Controller {
     if (this.leftSideBaseboardController == null) {
       this.leftSideBaseboardController = new BaseboardChoiceController(
           this.preferences, this.viewFactory, this.contentManager);
+      this.leftSideBaseboardController.addPropertyChangeListener(BaseboardChoiceController.Property.VISIBLE,
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              if (Boolean.TRUE.equals(ev.getNewValue())) {
+                setFloating(Boolean.FALSE);
+              }
+            }
+          });
     }
     return this.leftSideBaseboardController;
   }
@@ -175,6 +190,14 @@ public class WallController implements Controller {
     if (this.rightSideBaseboardController == null) {
       this.rightSideBaseboardController = new BaseboardChoiceController(
           this.preferences, this.viewFactory, this.contentManager);
+      this.rightSideBaseboardController.addPropertyChangeListener(BaseboardChoiceController.Property.VISIBLE,
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              if (Boolean.TRUE.equals(ev.getNewValue())) {
+                setFloating(Boolean.FALSE);
+              }
+            }
+          });
     }
     return this.rightSideBaseboardController;
   }
@@ -251,6 +274,7 @@ public class WallController implements Controller {
       setShape(null);
       setThickness(null);
       setArcExtentInDegrees(null);
+      setInitialElevationProperties(null, null, null, null, null);
     } else {
       // Search the common properties among selected walls
       Wall firstWall = selectedWalls.get(0);
@@ -687,6 +711,49 @@ public class WallController implements Controller {
         setShape(null);
       }
 
+      // Search the common floor attachment among walls
+      Boolean floating = firstWall.isFloating();
+      assert floating != null;
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        if (!floating.equals(selectedWalls.get(i).isFloating())) {
+          floating = null;
+          break;
+        }
+      }
+
+      // Search the common elevation shape among walls
+      WallShape elevationShape = firstWall.isElevationTrapezoidal()
+                                 ? WallShape.SLOPING_WALL : WallShape.RECTANGULAR_WALL;
+      assert elevationShape != null;
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        if (selectedWalls.get(i).isElevationTrapezoidal() ^ elevationShape == WallShape.SLOPING_WALL) {
+          elevationShape = null;
+          break;
+        }
+      }
+
+      // Search the common elevation among walls
+      Float elevation = firstWall.getElevationOrDefault();
+      assert elevation != null;
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        if (!elevation.equals(selectedWalls.get(i).getElevationOrDefault())) {
+          elevation = null;
+          break;
+        }
+      }
+
+      // Search the common elevation at end among walls
+      Float elevationAtEnd = firstWall.getElevationAtEndOrDefault();
+      assert elevationAtEnd != null;
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        if (!elevationAtEnd.equals(selectedWalls.get(i).getElevationAtEndOrDefault())) {
+          elevationAtEnd = null;
+          break;
+        }
+      }
+
+      setInitialElevationProperties(floating, elevationShape, elevation, elevation, elevationAtEnd);
+
       // Search the common thickness among walls
       Float thickness = firstWall.getThickness();
       for (int i = 1; i < selectedWalls.size(); i++) {
@@ -1120,16 +1187,16 @@ public class WallController implements Controller {
         }
       } else if (shape == WallShape.SLOPING_WALL) {
         if (this.slopingWallHeightAtStart != null
-            && this.sloppingWallHeightAtEnd != null) {
-          float baseboardMaxHeight = Math.max(this.sloppingWallHeightAtEnd, this.slopingWallHeightAtStart);
+            && this.slopingWallHeightAtEnd != null) {
+          float baseboardMaxHeight = Math.max(this.slopingWallHeightAtEnd, this.slopingWallHeightAtStart);
           getLeftSideBaseboardController().setMaxHeight(baseboardMaxHeight);
           getRightSideBaseboardController().setMaxHeight(baseboardMaxHeight);
         } else if (this.slopingWallHeightAtStart != null) {
           getLeftSideBaseboardController().setMaxHeight(this.slopingWallHeightAtStart);
           getRightSideBaseboardController().setMaxHeight(this.slopingWallHeightAtStart);
-        } else if (this.sloppingWallHeightAtEnd != null) {
-          getLeftSideBaseboardController().setMaxHeight(this.sloppingWallHeightAtEnd);
-          getRightSideBaseboardController().setMaxHeight(this.sloppingWallHeightAtEnd);
+        } else if (this.slopingWallHeightAtEnd != null) {
+          getLeftSideBaseboardController().setMaxHeight(this.slopingWallHeightAtEnd);
+          getRightSideBaseboardController().setMaxHeight(this.slopingWallHeightAtEnd);
         }
       }
     }
@@ -1179,8 +1246,8 @@ public class WallController implements Controller {
 
       setShape(WallShape.SLOPING_WALL);
       if (slopingWallHeightAtStart != null) {
-        float baseboardMaxHeight = this.sloppingWallHeightAtEnd != null
-            ? Math.max(this.sloppingWallHeightAtEnd, slopingWallHeightAtStart)
+        float baseboardMaxHeight = this.slopingWallHeightAtEnd != null
+            ? Math.max(this.slopingWallHeightAtEnd, slopingWallHeightAtStart)
             : slopingWallHeightAtStart;
         baseboardMaxHeight = Math.max(baseboardMaxHeight, this.preferences.getLengthUnit().getMinimumLength());
         getLeftSideBaseboardController().setMaxHeight(baseboardMaxHeight);
@@ -1199,18 +1266,18 @@ public class WallController implements Controller {
   /**
    * Sets the edited height at end of a sloping wall.
    */
-  public void setSlopingWallHeightAtEnd(Float sloppingWallHeightAtEnd) {
-    if (sloppingWallHeightAtEnd != this.sloppingWallHeightAtEnd) {
-      Float oldSlopingWallHeightAtEnd = this.sloppingWallHeightAtEnd;
-      this.sloppingWallHeightAtEnd = sloppingWallHeightAtEnd;
+  public void setSlopingWallHeightAtEnd(Float slopingWallHeightAtEnd) {
+    if (slopingWallHeightAtEnd != this.slopingWallHeightAtEnd) {
+      Float oldSlopingWallHeightAtEnd = this.slopingWallHeightAtEnd;
+      this.slopingWallHeightAtEnd = slopingWallHeightAtEnd;
       this.propertyChangeSupport.firePropertyChange(Property.SLOPING_WALL_HEIGHT_AT_END.name(),
-          oldSlopingWallHeightAtEnd, sloppingWallHeightAtEnd);
+          oldSlopingWallHeightAtEnd, slopingWallHeightAtEnd);
 
       setShape(WallShape.SLOPING_WALL);
-      if (sloppingWallHeightAtEnd != null) {
+      if (slopingWallHeightAtEnd != null) {
         float baseboardMaxHeight = this.slopingWallHeightAtStart != null
-            ? Math.max(this.slopingWallHeightAtStart, sloppingWallHeightAtEnd)
-            : sloppingWallHeightAtEnd;
+            ? Math.max(this.slopingWallHeightAtStart, slopingWallHeightAtEnd)
+            : slopingWallHeightAtEnd;
         baseboardMaxHeight = Math.max(baseboardMaxHeight, this.preferences.getLengthUnit().getMinimumLength());
         getLeftSideBaseboardController().setMaxHeight(baseboardMaxHeight);
         getRightSideBaseboardController().setMaxHeight(baseboardMaxHeight);
@@ -1222,7 +1289,191 @@ public class WallController implements Controller {
    * Returns the edited height at end of a sloping wall.
    */
   public Float getSlopingWallHeightAtEnd() {
-    return this.sloppingWallHeightAtEnd;
+    return this.slopingWallHeightAtEnd;
+  }
+
+  /**
+   * Sets whether the edited wall elevation is rectangular, sloping, or unknown.
+   */
+  public void setElevationShape(WallShape elevationShape) {
+    if (elevationShape != this.elevationShape) {
+      WallShape oldElevationShape = this.elevationShape;
+      this.elevationShape = elevationShape;
+      this.propertyChangeSupport.firePropertyChange(Property.ELEVATION_SHAPE.name(),
+          oldElevationShape, elevationShape);
+
+      if (elevationShape == WallShape.SLOPING_WALL) {
+        // getSlopingElevationAtEnd can be non-null
+        // if setElevationShape is being called from
+        // setSlopingElevationAtEnd after user input
+        if (getSlopingElevationAtEnd() == null) {
+          setSlopingElevationAtEnd(this.initialSlopingElevationAtEnd);
+        }
+      } else {
+        setSlopingElevationAtEnd(null);
+      }
+    }
+  }
+
+  /**
+   * Returns whether the edited wall elevation is rectangular, sloping, or unknown.
+   */
+  public WallShape getElevationShape() {
+    return this.elevationShape;
+  }
+
+  /**
+   * Sets the edited elevation of a rectangular wall.
+   */
+  public void setRectangularElevation(Float rectangularElevation) {
+    if (rectangularElevation != this.rectangularElevation
+        && (rectangularElevation == null || !rectangularElevation.equals(this.rectangularElevation))) {
+      Float oldRectangularElevation = this.rectangularElevation;
+      this.rectangularElevation = rectangularElevation;
+      this.propertyChangeSupport.firePropertyChange(Property.RECTANGULAR_ELEVATION.name(),
+          oldRectangularElevation, rectangularElevation);
+
+      if (rectangularElevation != null) {
+        setElevationShape(WallShape.RECTANGULAR_WALL);
+        if (rectangularElevation > 0.0f) {
+          setFloating(Boolean.TRUE);
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns the edited elevation of a rectangular wall.
+   */
+  public Float getRectangularElevation() {
+    return this.rectangularElevation;
+  }
+
+  /**
+   * Sets the edited elevation at start of a sloping wall.
+   */
+  public void setSlopingElevationAtStart(Float slopingElevationAtStart) {
+    if (slopingElevationAtStart != this.slopingElevationAtStart
+        && (slopingElevationAtStart == null || !slopingElevationAtStart.equals(this.slopingElevationAtStart))) {
+      Float oldSlopingElevationAtStart = this.slopingElevationAtStart;
+      this.slopingElevationAtStart = slopingElevationAtStart;
+      this.propertyChangeSupport.firePropertyChange(Property.SLOPING_ELEVATION_AT_START.name(),
+          oldSlopingElevationAtStart, slopingElevationAtStart);
+
+      if (slopingElevationAtStart != null) {
+        setElevationShape(WallShape.SLOPING_WALL);
+        if (slopingElevationAtStart > 0.0f) {
+          setFloating(Boolean.TRUE);
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns the edited elevation at start of a sloping wall.
+   */
+  public Float getSlopingElevationAtStart() {
+    return this.slopingElevationAtStart;
+  }
+
+  /**
+   * Sets the edited elevation at end of a sloping wall.
+   */
+  public void setSlopingElevationAtEnd(Float slopingElevationAtEnd) {
+    if (slopingElevationAtEnd != this.slopingElevationAtEnd
+        && (slopingElevationAtEnd == null || !slopingElevationAtEnd.equals(this.slopingElevationAtEnd))) {
+      Float oldSlopingElevationAtEnd = this.slopingElevationAtEnd;
+      this.slopingElevationAtEnd = slopingElevationAtEnd;
+      this.propertyChangeSupport.firePropertyChange(Property.SLOPING_ELEVATION_AT_END.name(),
+          oldSlopingElevationAtEnd, slopingElevationAtEnd);
+
+      if (slopingElevationAtEnd != null) {
+        setElevationShape(WallShape.SLOPING_WALL);
+        if (slopingElevationAtEnd > 0.0f) {
+          setFloating(Boolean.TRUE);
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns the edited elevation at end of a sloping wall.
+   */
+  public Float getSlopingElevationAtEnd() {
+    return this.slopingElevationAtEnd;
+  }
+
+  /**
+   * Sets the edited floating property of a wall.
+   */
+  public void setFloating(Boolean floating) {
+    if (floating != this.floating) {
+      Boolean oldFloating = this.floating;
+      this.floating = floating;
+      this.propertyChangeSupport.firePropertyChange(Property.FLOATING.name(),
+          oldFloating, floating);
+
+      if (Boolean.TRUE.equals(floating)) {
+        getLeftSideBaseboardController().setVisible(Boolean.FALSE);
+        getRightSideBaseboardController().setVisible(Boolean.FALSE);
+      } else if (Boolean.FALSE.equals(floating)) {
+        setRectangularElevation(0.0f);
+      } // else null
+    }
+  }
+
+  /**
+   * Returns the edited floating property of a wall.
+   */
+  public Boolean isFloating() {
+    return this.floating;
+  }
+
+  /**
+   * Sets all edited elevation properties of a wall at once.
+   */
+  private void setInitialElevationProperties(Boolean floating, WallShape elevationShape,
+                                             Float rectangularElevation,
+                                             Float slopingElevationAtStart, Float slopingElevationAtEnd) {
+
+    this.initialSlopingElevationAtEnd = slopingElevationAtEnd;
+    if (elevationShape != WallShape.SLOPING_WALL) {
+      slopingElevationAtEnd = null;
+    }
+
+    if (floating != this.floating) {
+      Boolean oldFloating = this.floating;
+      this.floating = floating;
+      this.propertyChangeSupport.firePropertyChange(Property.FLOATING.name(),
+          oldFloating, floating);
+    }
+    if (elevationShape != this.elevationShape) {
+      WallShape oldElevationShape = this.elevationShape;
+      this.elevationShape = elevationShape;
+      this.propertyChangeSupport.firePropertyChange(Property.ELEVATION_SHAPE.name(),
+          oldElevationShape, elevationShape);
+    }
+    if (rectangularElevation != this.rectangularElevation
+        && (rectangularElevation == null || !rectangularElevation.equals(this.rectangularElevation))) {
+      Float oldRectangularElevation = this.rectangularElevation;
+      this.rectangularElevation = rectangularElevation;
+      this.propertyChangeSupport.firePropertyChange(Property.RECTANGULAR_ELEVATION.name(),
+          oldRectangularElevation, rectangularElevation);
+    }
+    if (slopingElevationAtStart != this.slopingElevationAtStart
+        && (slopingElevationAtStart == null || !slopingElevationAtStart.equals(this.slopingElevationAtStart))) {
+      Float oldSlopingElevationAtStart = this.slopingElevationAtStart;
+      this.slopingElevationAtStart = slopingElevationAtStart;
+      this.propertyChangeSupport.firePropertyChange(Property.SLOPING_ELEVATION_AT_START.name(),
+          oldSlopingElevationAtStart, slopingElevationAtStart);
+    }
+    if (slopingElevationAtEnd != this.slopingElevationAtEnd
+        && (slopingElevationAtEnd == null || !slopingElevationAtEnd.equals(this.slopingElevationAtEnd))) {
+      Float oldSlopingElevationAtEnd = this.slopingElevationAtEnd;
+      this.slopingElevationAtEnd = slopingElevationAtEnd;
+      this.propertyChangeSupport.firePropertyChange(Property.SLOPING_ELEVATION_AT_END.name(),
+          oldSlopingElevationAtEnd, slopingElevationAtEnd);
+    }
   }
 
   /**
@@ -1358,6 +1609,24 @@ public class WallController implements Controller {
         }
       }
 
+      Boolean floating = isFloating();
+      Float elevation;
+      if (getElevationShape() == WallShape.SLOPING_WALL) {
+        elevation = getSlopingElevationAtStart();
+      } else if (getElevationShape() == WallShape.RECTANGULAR_WALL) {
+        elevation = getRectangularElevation();
+      } else {
+        elevation = null;
+      }
+      Float elevationAtEnd;
+      if (getElevationShape() == WallShape.SLOPING_WALL) {
+        elevationAtEnd = getSlopingElevationAtEnd();
+      } else if (getElevationShape() == WallShape.RECTANGULAR_WALL) {
+        elevationAtEnd = getRectangularElevation();
+      } else {
+        elevationAtEnd = null;
+      }
+
       // Create an array of modified walls with their current properties values
       ModifiedWall [] modifiedWalls = new ModifiedWall [selectedWalls.size()];
       for (int i = 0; i < modifiedWalls.length; i++) {
@@ -1374,7 +1643,7 @@ public class WallController implements Controller {
           rightSideBaseboardVisible, rightSideBaseboardThickness, rightSideBaseboardHeight,
           rightSideBaseboardPaint, rightSideBaseboardColor, rightSideBaseboardTexture,
           pattern, modifiedTopColor, topColor,
-          height, heightAtEnd, thickness, arcExtent);
+          height, heightAtEnd, floating, elevation, elevationAtEnd, thickness, arcExtent);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new WallsModificationUndoableEdit(this.home,
             this.preferences, oldSelection.toArray(new Selectable [oldSelection.size()]) , modifiedWalls,
@@ -1387,7 +1656,7 @@ public class WallController implements Controller {
             rightSideBaseboardVisible, rightSideBaseboardThickness, rightSideBaseboardHeight,
             rightSideBaseboardPaint, rightSideBaseboardColor, rightSideBaseboardTexture,
             pattern, modifiedTopColor, topColor,
-            height, heightAtEnd, thickness, arcExtent);
+            height, heightAtEnd, floating, elevation, elevationAtEnd, thickness, arcExtent);
         this.undoSupport.postEdit(undoableEdit);
       }
     }
@@ -1432,6 +1701,9 @@ public class WallController implements Controller {
     private final Integer          topColor;
     private final Float            height;
     private final Float            heightAtEnd;
+    private final Boolean          floating;
+    private final Float            elevation;
+    private final Float            elevationAtEnd;
     private final Float            thickness;
     private final Float            arcExtent;
 
@@ -1453,6 +1725,9 @@ public class WallController implements Controller {
                                           Integer topColor,
                                           Float height,
                                           Float heightAtEnd,
+                                          Boolean floating,
+                                          Float elevation,
+                                          Float elevationAtEnd,
                                           Float thickness,
                                           Float arcExtent) {
       super(preferences, WallController.class, "undoModifyWallsName");
@@ -1490,6 +1765,9 @@ public class WallController implements Controller {
       this.topColor = topColor;
       this.height = height;
       this.heightAtEnd = heightAtEnd;
+      this.floating = floating;
+      this.elevation = elevation;
+      this.elevationAtEnd = elevationAtEnd;
       this.thickness = thickness;
       this.arcExtent = arcExtent;
     }
@@ -1513,7 +1791,8 @@ public class WallController implements Controller {
           this.rightSideBaseboardVisible, this.rightSideBaseboardThickness, this.rightSideBaseboardHeight,
           this.rightSideBaseboardPaint, this.rightSideBaseboardColor, this.rightSideBaseboardTexture,
           this.pattern, this.modifiedTopColor, this.topColor,
-          this.height, this.heightAtEnd, this.thickness, this.arcExtent);
+          this.height, this.heightAtEnd, this.floating, this.elevation, this.elevationAtEnd,
+          this.thickness, this.arcExtent);
       this.home.setSelectedItems(Arrays.asList(this.oldSelection));
     }
   }
@@ -1530,7 +1809,7 @@ public class WallController implements Controller {
                                     Boolean rightSideBaseboardVisible, Float rightSideBaseboardThickness, Float rightSideBaseboardHeight,
                                     BaseboardChoiceController.BaseboardPaint rightSideBaseboardPaint, Integer rightSideBaseboardColor, HomeTexture rightSideBaseboardTexture,
                                     TextureImage pattern, boolean modifiedTopColor, Integer topColor,
-                                    Float height, Float heightAtEnd, Float thickness, Float arcExtent) {
+                                    Float height, Float heightAtEnd, Boolean floating, Float elevation, Float elevationAtEnd, Float thickness, Float arcExtent) {
     for (ModifiedWall modifiedWall : modifiedWalls) {
       Wall wall = modifiedWall.getWall();
       moveWallPoints(wall, xStart, yStart, xEnd, yEnd);
@@ -1692,6 +1971,19 @@ public class WallController implements Controller {
           }
         }
       }
+      if (floating != null) {
+        wall.setFloating(floating);
+      }
+      if (elevation != null) {
+        wall.setElevation(elevation);
+        if (elevationAtEnd != null) {
+          if (elevationAtEnd.equals(elevation)) {
+            wall.setElevationAtEnd(null);
+          } else {
+            wall.setElevationAtEnd(elevationAtEnd);
+          }
+        }
+      }
       if (thickness != null) {
         wall.setThickness(thickness.floatValue());
       }
@@ -1725,6 +2017,9 @@ public class WallController implements Controller {
       wall.setTopColor(modifiedWall.getTopColor());
       wall.setHeight(modifiedWall.getHeight());
       wall.setHeightAtEnd(modifiedWall.getHeightAtEnd());
+      wall.setFloating(modifiedWall.isFloating());
+      wall.setElevation(modifiedWall.getElevation());
+      wall.setElevationAtEnd(modifiedWall.getElevationAtEnd());
       wall.setThickness(modifiedWall.getThickness());
       wall.setArcExtent(modifiedWall.getArcExtent());
     }
@@ -1804,6 +2099,9 @@ public class WallController implements Controller {
     private final Integer      topColor;
     private final Float        height;
     private final Float        heightAtEnd;
+    private final boolean      floating;
+    private final Float        elevation;
+    private final Float        elevationAtEnd;
     private final float        thickness;
     private final Float        arcExtent;
 
@@ -1825,6 +2123,9 @@ public class WallController implements Controller {
       this.topColor = wall.getTopColor();
       this.height = wall.getHeight();
       this.heightAtEnd = wall.getHeightAtEnd();
+      this.floating = wall.isFloating();
+      this.elevation = wall.getElevation();
+      this.elevationAtEnd = wall.getElevationAtEnd();
       this.thickness = wall.getThickness();
       this.arcExtent = wall.getArcExtent();
     }
@@ -1855,6 +2156,18 @@ public class WallController implements Controller {
 
     public Float getHeightAtEnd() {
       return this.heightAtEnd;
+    }
+
+    public boolean isFloating() {
+      return this.floating;
+    }
+
+    public Float getElevation() {
+      return this.elevation;
+    }
+
+    public Float getElevationAtEnd() {
+      return this.elevationAtEnd;
     }
 
     public Integer getLeftSideColor() {

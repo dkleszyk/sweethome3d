@@ -604,6 +604,15 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
           writer.writeFloatAttribute("yEnd", wall.getYEnd());
           writer.writeFloatAttribute("height", wall.getHeight());
           writer.writeFloatAttribute("heightAtEnd", wall.getHeightAtEnd());
+          if (wall.getElevation() != null) {
+            writer.writeFloatAttribute("elevation", wall.getElevation());
+          }
+          if (wall.getElevationAtEnd() != null) {
+            writer.writeFloatAttribute("elevationAtEnd", wall.getElevationAtEnd());
+          }
+          if (wall.isFloating()) {
+            writer.writeAttribute("floating", String.valueOf(true));
+          }
           writer.writeFloatAttribute("thickness", wall.getThickness());
           writer.writeFloatAttribute("arcExtent", wall.getArcExtent());
           if (wall.getPattern() != null) {

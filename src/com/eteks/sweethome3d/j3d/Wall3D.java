@@ -278,9 +278,19 @@ public class Wall3D extends Object3DBranch {
     final float [] textureReferencePoint = wallSide == WALL_LEFT_SIDE
         ? wallSideOrBaseboardPoints [0].clone()
         : wallSideOrBaseboardPoints [wallSideOrBaseboardPoints.length - 1].clone();
-    final float wallElevation = getWallElevation(baseboard != null);
-    float topElevationAtStart;
-    float topElevationAtEnd;
+
+    // Compute start and end elevations
+    final float bottomElevationAtStart;
+    final float bottomElevationAtEnd;
+    if (baseboard == null) {
+      bottomElevationAtStart = getWallBottomElevationAtStart();
+      bottomElevationAtEnd = getWallBottomElevationAtEnd();
+    } else {
+      bottomElevationAtStart =
+      bottomElevationAtEnd = getWallElevation(true /*baseboard != null*/);
+    }
+    final float topElevationAtStart;
+    final float topElevationAtEnd;
     if (baseboard == null) {
       topElevationAtStart = getWallTopElevationAtStart();
       topElevationAtEnd = getWallTopElevationAtEnd();
@@ -288,16 +298,17 @@ public class Wall3D extends Object3DBranch {
       topElevationAtStart =
       topElevationAtEnd = getBaseboardTopElevation(baseboard);
     }
-    float maxTopElevation = Math.max(topElevationAtStart, topElevationAtEnd);
+    final float minBottomElevation = Math.min(bottomElevationAtStart, bottomElevationAtEnd);
+    final float maxTopElevation = Math.max(topElevationAtStart, topElevationAtEnd);
 
     // Compute wall angles and top line factors
-    double wallYawAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), wall.getXEnd() - wall.getXStart());
+    final double wallYawAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), wall.getXEnd() - wall.getXStart());
     final double cosWallYawAngle = Math.cos(wallYawAngle);
     final double sinWallYawAngle = Math.sin(wallYawAngle);
-    double wallXStartWithZeroYaw = cosWallYawAngle * wall.getXStart() + sinWallYawAngle * wall.getYStart();
-    double wallXEndWithZeroYaw = cosWallYawAngle * wall.getXEnd() + sinWallYawAngle * wall.getYEnd();
-    Float arcExtent = wall.getArcExtent();
-    boolean roundWall = arcExtent != null && arcExtent.floatValue() != 0;
+    final double wallXStartWithZeroYaw = cosWallYawAngle * wall.getXStart() + sinWallYawAngle * wall.getYStart();
+    final double wallXEndWithZeroYaw = cosWallYawAngle * wall.getXEnd() + sinWallYawAngle * wall.getYEnd();
+    final Float arcExtent = wall.getArcExtent();
+    final boolean roundWall = arcExtent != null && arcExtent.floatValue() != 0;
     final double topLineAlpha;
     final double topLineBeta;
     if (topElevationAtStart == topElevationAtEnd) {
@@ -307,13 +318,21 @@ public class Wall3D extends Object3DBranch {
       topLineAlpha = (topElevationAtEnd - topElevationAtStart) / (wallXEndWithZeroYaw - wallXStartWithZeroYaw);
       topLineBeta = topElevationAtStart - topLineAlpha * wallXStartWithZeroYaw;
     }
+    final ElevationPlane wallBottom = ElevationPlane.create(wall.getXStart(), wall.getYStart(),
+                                                            bottomElevationAtStart,
+                                                            wall.getXEnd(), wall.getYEnd(),
+                                                            bottomElevationAtEnd);
+    final ElevationPlane wallTop = ElevationPlane.create(wall.getXStart(), wall.getYStart(),
+                                                         topElevationAtStart,
+                                                         wall.getXEnd(), wall.getYEnd(),
+                                                         topElevationAtEnd);
 
     // Search which doors or windows intersect with this wall side or its baseboard
     List<DoorOrWindowArea> windowIntersections = new ArrayList<DoorOrWindowArea>();
     List<HomePieceOfFurniture> intersectingDoorOrWindows = new ArrayList<HomePieceOfFurniture>();
     for (HomePieceOfFurniture piece : getVisibleDoorsAndWindows(getHome().getFurniture())) {
       float pieceElevation = piece.getGroundElevation();
-      if (pieceElevation + piece.getHeight() > wallElevation
+      if (pieceElevation + piece.getHeight() > minBottomElevation
           && pieceElevation < maxTopElevation) {
         Area pieceArea = new Area(getShape(piece.getPoints()));
         Area intersectionArea = new Area(wallShape);
@@ -347,8 +366,8 @@ public class Wall3D extends Object3DBranch {
             intersectionArea.intersect(pieceArea);
           }
           if (!intersectionArea.isEmpty()
-              && (!wall.isTrapezoidal()
-                  || pieceElevation < getMaxElevationAtWallIntersection(intersectionArea, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta))) {
+              && (topLineAlpha == 0
+                  || pieceElevation < getMaxElevationAtWallIntersection(intersectionArea, wallTop))) {
             windowIntersections.add(new DoorOrWindowArea(intersectionArea, Arrays.asList(new HomePieceOfFurniture [] {piece})));
             intersectingDoorOrWindows.add(piece);
             // Remove from wall area the piece shape
@@ -399,14 +418,12 @@ public class Wall3D extends Object3DBranch {
           if (points.size() > 2) {
             float [][] wallPartPoints = points.toArray(new float[points.size()][]);
             // Compute geometry for vertical part
-            sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, wallElevation,
-                cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, baseboard, texture,
-                textureReferencePoint, wallSide));
+            sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, wallBottom, wallTop, baseboard,
+                                                          texture, textureReferencePoint, wallSide));
             // Compute geometry for bottom part
-            bottomGeometries.add(createHorizontalPartGeometry(wallPartPoints, wallElevation, true, roundWall));
+            bottomGeometries.add(createHorizontalPartGeometry(wallPartPoints, wallBottom, true, roundWall));
             // Compute geometry for top part
-            topGeometries.add(createTopPartGeometry(wallPartPoints,
-                cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, roundWall));
+            topGeometries.add(createHorizontalPartGeometry(wallPartPoints, wallTop, false, roundWall));
           }
         }
         points.clear();
@@ -454,19 +471,18 @@ public class Wall3D extends Object3DBranch {
               HomePieceOfFurniture lowestDoorOrWindow = doorsOrWindows.get(0);
               float lowestDoorOrWindowElevation = lowestDoorOrWindow.getGroundElevation();
               // Generate geometry for wall part below window
-              if (lowestDoorOrWindowElevation > wallElevation) {
+              if (lowestDoorOrWindowElevation > minBottomElevation) {
                 if (level != null
-                    && level.getElevation() != wallElevation
+                    && level.getElevation() != minBottomElevation
                     && lowestDoorOrWindow.getElevation() < LEVEL_ELEVATION_SHIFT) {
                   // Give more chance to an overlapping room floor to be displayed
                   lowestDoorOrWindowElevation -= LEVEL_ELEVATION_SHIFT;
                 }
-                sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, wallElevation,
-                    cosWallYawAngle, sinWallYawAngle, 0, lowestDoorOrWindowElevation, baseboard, texture,
-                    textureReferencePoint, wallSide));
-                bottomGeometries.add(createHorizontalPartGeometry(wallPartPoints, wallElevation, true, roundWall));
-                sideGeometries.add(createHorizontalPartGeometry(wallPartPoints,
-                    lowestDoorOrWindowElevation, false, roundWall));
+                ElevationPlane doorOrWindowBottom = ElevationPlane.create(lowestDoorOrWindowElevation);
+                sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, wallBottom, doorOrWindowBottom,
+                                                              baseboard, texture, textureReferencePoint, wallSide));
+                bottomGeometries.add(createHorizontalPartGeometry(wallPartPoints, wallBottom, true, roundWall));
+                sideGeometries.add(createHorizontalPartGeometry(wallPartPoints, doorOrWindowBottom, false, roundWall));
               }
 
               // Generate geometry for wall parts between superimposed windows
@@ -482,11 +498,12 @@ public class Wall3D extends Object3DBranch {
                 }
                 if (i < doorsOrWindows.size()
                     && lowerDoorOrWindowElevation + lowerDoorOrWindow.getHeight() < higherDoorOrWindowElevation) {
-                  sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, lowerDoorOrWindowElevation + lowerDoorOrWindow.getHeight(),
-                      cosWallYawAngle, sinWallYawAngle, 0, higherDoorOrWindowElevation, baseboard, texture, textureReferencePoint, wallSide));
-                  sideGeometries.add(createHorizontalPartGeometry(wallPartPoints,
-                      lowerDoorOrWindowElevation + lowerDoorOrWindow.getHeight(), true, roundWall));
-                  sideGeometries.add(createHorizontalPartGeometry(wallPartPoints, higherDoorOrWindowElevation, false, roundWall));
+                  ElevationPlane lowerDoorOrWindowTop = ElevationPlane.create(lowerDoorOrWindowElevation + lowerDoorOrWindow.getHeight());
+                  ElevationPlane higherDoorOrWindowBottom = ElevationPlane.create(higherDoorOrWindowElevation);
+                  sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, lowerDoorOrWindowTop, higherDoorOrWindowBottom,
+                                                                baseboard, texture, textureReferencePoint, wallSide));
+                  sideGeometries.add(createHorizontalPartGeometry(wallPartPoints, lowerDoorOrWindowTop, true, roundWall));
+                  sideGeometries.add(createHorizontalPartGeometry(wallPartPoints, higherDoorOrWindowBottom, false, roundWall));
                 }
               }
 
@@ -498,31 +515,29 @@ public class Wall3D extends Object3DBranch {
                   highestDoorOrWindow = doorOrWindow;
                 }
               }
-              float doorOrWindowTop = highestDoorOrWindowElevation + highestDoorOrWindow.getHeight();
+              float highestDoorOrWindowTopElevation = highestDoorOrWindowElevation + highestDoorOrWindow.getHeight();
               boolean generateGeometry = true;
-              // Translate points of wall part under doorOrWindowTop along sloping wall top
+              // Translate points of wall part under highestDoorOrWindowTopElevation along sloping wall top
               for (int i = 0; i < wallPartPoints.length; i++) {
-                double xTopPointWithZeroYaw = cosWallYawAngle * wallPartPoints[i][0] + sinWallYawAngle * wallPartPoints[i][1];
-                double topPointWithZeroYawElevation = topLineAlpha * xTopPointWithZeroYaw + topLineBeta;
-                if (doorOrWindowTop > topPointWithZeroYawElevation) {
+                float wallElevationAtPoint = wallTop.getElevationAtPoint(wallPartPoints [i]);
+                if (highestDoorOrWindowTopElevation > wallElevationAtPoint) {
                   if (topLineAlpha == 0 || roundWall) {
                     // Ignore geometry above window for flat wall or round sloping wall
                     generateGeometry = false;
                     break;
                   }
-                  double translation = (doorOrWindowTop - topPointWithZeroYawElevation) / topLineAlpha;
+                  double translation = (highestDoorOrWindowTopElevation - wallElevationAtPoint) / topLineAlpha;
                   wallPartPoints [i][0] += (float)(translation * cosWallYawAngle);
                   wallPartPoints [i][1] += (float)(translation * sinWallYawAngle);
                 }
               }
               // Generate geometry for wall part above window
               if (generateGeometry) {
-                sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, doorOrWindowTop,
-                    cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, baseboard, texture, textureReferencePoint, wallSide));
-                sideGeometries.add(createHorizontalPartGeometry(
-                    wallPartPoints, doorOrWindowTop, true, roundWall));
-                topGeometries.add(createTopPartGeometry(wallPartPoints,
-                    cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, roundWall));
+                ElevationPlane highestDoorOrWindowTop = ElevationPlane.create(highestDoorOrWindowTopElevation);
+                sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, highestDoorOrWindowTop, wallTop,
+                                                              baseboard, texture, textureReferencePoint, wallSide));
+                sideGeometries.add(createHorizontalPartGeometry(wallPartPoints, highestDoorOrWindowTop, true, roundWall));
+                topGeometries.add(createHorizontalPartGeometry(wallPartPoints, wallTop, false, roundWall));
               }
             }
             points.clear();
@@ -560,7 +575,7 @@ public class Wall3D extends Object3DBranch {
                   && (missingModels.size() == 0 || !waitDoorOrWindowModelsLoadingEnd)) {
                 createGeometriesSurroundingDoorOrWindow((HomeDoorOrWindow)doorOrWindow, rotatedModelsFrontAreas.get(rotatedModel), frontOrBackSide,
                     wall, sideGeometries, topGeometries,
-                    wallSideOrBaseboardPoints, wallElevation, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta,
+                    wallSideOrBaseboardPoints, cosWallYawAngle, sinWallYawAngle, wallBottom, wallTop,
                     texture, textureReferencePoint, wallSide);
               } else {
                 missingModels.add(doorOrWindow);
@@ -611,7 +626,7 @@ public class Wall3D extends Object3DBranch {
                   if (waitDoorOrWindowModelsLoadingEnd) {
                     createGeometriesSurroundingDoorOrWindow(doorOrWindow, frontArea, frontOrBackSide,
                         wall, sideGeometries, topGeometries,
-                        wallSideOrBaseboardPoints, wallElevation, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta,
+                        wallSideOrBaseboardPoints, cosWallYawAngle, sinWallYawAngle, wallBottom, wallTop,
                         texture, textureReferencePoint, wallSide);
                   } else {
                     missingModels.remove(doorOrWindow);
@@ -711,9 +726,9 @@ public class Wall3D extends Object3DBranch {
    * vertical axis matching <code>cosWallYawAngle</code> and <code>sinWallYawAngle</code>.
    */
   private Geometry createVerticalPartGeometry(Wall wall,
-                                              float [][] points, float minElevation,
-                                              double cosWallYawAngle, double sinWallYawAngle,
-                                              double topLineAlpha, double topLineBeta,
+                                              float [][] points,
+                                              ElevationPlane wallBottom,
+                                              ElevationPlane wallTop,
                                               Baseboard baseboard, HomeTexture texture,
                                               float [] textureReferencePoint,
                                               int wallSide) {
@@ -755,10 +770,8 @@ public class Wall3D extends Object3DBranch {
           textureReferencePoint [0] - arcCircleCenter [0]);
     }
     for (int i = 0; i < points.length; i++) {
-      bottom [i] = new Point3f(points [i][0], minElevation, points [i][1]);
-      // Compute vertical top point
-      float topY = getWallPointElevation(points [i][0], points [i][1], cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta);
-      top [i] = new Point3f(points [i][0], topY, points [i][1]);
+      bottom [i] = createCoordinateAtPoint(points [i], wallBottom);
+      top [i] = createCoordinateAtPoint(points [i], wallTop);
     }
     double  [] distanceSqToWallMiddle = new double [points.length];
     for (int i = 0; i < points.length; i++) {
@@ -798,12 +811,14 @@ public class Wall3D extends Object3DBranch {
     List<Point3f> coords = new ArrayList<Point3f> (rectanglesCount * 4);
     for (int index = 0; index < points.length; index++) {
       if (usedRectangle [index]) {
-        float y = minElevation;
-        Point3f point1 = bottom [index];
         int nextIndex = (index + 1) % points.length;
+        Point3f point1 = bottom [index];
         Point3f point2 = bottom [nextIndex];
         if (subpartSize > 0) {
-          for (float yMax = Math.min(top [index].y, top [nextIndex].y) - subpartSize / 2; y < yMax; y += subpartSize) {
+          for (float y = Math.max(bottom [index].y, bottom [nextIndex].y) + subpartSize / 2,
+                     yMax = Math.min(top [index].y, top [nextIndex].y) - subpartSize / 2;
+               y < yMax;
+               y += subpartSize) {
             coords.add(point1);
             coords.add(point2);
             point1 = new Point3f(bottom [index].x, y, bottom [index].z);
@@ -832,7 +847,6 @@ public class Wall3D extends Object3DBranch {
         halfThicknessSq = (wall.getThickness() * wall.getThickness()) / 4;
       }
       TexCoord2f [] textureCoords = new TexCoord2f [coords.size()];
-      TexCoord2f firstTextureCoords = new TexCoord2f(0, minElevation);
       int j = 0;
       // Tolerate more error with round walls since arc points are approximative
       float epsilon = arcCircleCenter == null
@@ -874,18 +888,20 @@ public class Wall3D extends Object3DBranch {
               secondHorizontalTextureCoords = -secondHorizontalTextureCoords;
             }
 
-            textureCoords1 = new TexCoord2f(firstHorizontalTextureCoords, minElevation);
-            textureCoords2 = new TexCoord2f(secondHorizontalTextureCoords, minElevation);
+            textureCoords1 = new TexCoord2f(firstHorizontalTextureCoords, bottom [index].y);
+            textureCoords2 = new TexCoord2f(secondHorizontalTextureCoords, bottom [nextIndex].y);
           } else {
-            textureCoords1 = firstTextureCoords;
             float horizontalTextureCoords = (float)Point2D.distance(points [index][0], points [index][1],
-                points [nextIndex][0], points [nextIndex][1]);
-            textureCoords2 = new TexCoord2f(horizontalTextureCoords, minElevation);
+                                                                    points [nextIndex][0], points [nextIndex][1]);
+            textureCoords1 = new TexCoord2f(0, bottom [index].y);
+            textureCoords2 = new TexCoord2f(horizontalTextureCoords, bottom [nextIndex].y);
           }
 
           if (subpartSize > 0) {
-            float y = minElevation;
-            for (float yMax = Math.min(top [index].y, top [nextIndex].y) - subpartSize / 2; y < yMax; y += subpartSize) {
+            for (float y = Math.max(bottom [index].y, bottom [nextIndex].y) + subpartSize / 2,
+                       yMax = Math.min(top [index].y, top [nextIndex].y) - subpartSize / 2;
+                 y < yMax;
+                 y += subpartSize) {
               textureCoords [j++] = textureCoords1;
               textureCoords [j++] = textureCoords2;
               textureCoords1 = new TexCoord2f(textureCoords1.x, y);
@@ -916,28 +932,15 @@ public class Wall3D extends Object3DBranch {
   /**
    * Returns the maximum wall elevation of each point of the given intersection.
    */
-  private float getMaxElevationAtWallIntersection(Area pieceWallIntersection, double cosWallYawAngle,
-                                                  double sinWallYawAngle, double topLineAlpha,
-                                                  double topLineBeta) {
+  private float getMaxElevationAtWallIntersection(Area pieceWallIntersection, ElevationPlane plane) {
     float maxElevation = Float.NEGATIVE_INFINITY;
     for (PathIterator it = pieceWallIntersection.getPathIterator(null); !it.isDone(); it.next()) {
       float [] wallPoint = new float[2];
       if (it.currentSegment(wallPoint) != PathIterator.SEG_CLOSE) {
-        maxElevation = Math.max(maxElevation, getWallPointElevation(wallPoint [0], wallPoint [1],
-              cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta));
+        maxElevation = Math.max(maxElevation, plane.getElevationAtPoint(wallPoint));
       }
     }
     return maxElevation;
-  }
-
-  /**
-   * Returns the elevation of the wall at the given point.
-   */
-  private float getWallPointElevation(float xWallPoint, float yWallPoint,
-                                      double cosWallYawAngle, double sinWallYawAngle,
-                                      double topLineAlpha, double topLineBeta) {
-    double xTopPointWithZeroYaw = cosWallYawAngle * xWallPoint + sinWallYawAngle * yWallPoint;
-    return (float)(topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
   }
 
   /**
@@ -966,13 +969,13 @@ public class Wall3D extends Object3DBranch {
   }
 
   /**
-   * Returns the geometry of an horizontal part of a wall or a baseboard at <code>y</code>.
+   * Returns the geometry of an horizontal part of a wall or a baseboard.
    */
-  private Geometry createHorizontalPartGeometry(float [][] points, float y,
+  private Geometry createHorizontalPartGeometry(float [][] points, ElevationPlane wallPart,
                                                 boolean reverseOrder, boolean roundWall) {
     Point3f [] coords = new Point3f [points.length];
     for (int i = 0; i < points.length; i++) {
-      coords [i] = new Point3f(points [i][0], y, points [i][1]);
+      coords [i] = createCoordinateAtPoint(points [i], wallPart);
     }
     GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
     geometryInfo.setCoordinates (coords);
@@ -980,31 +983,6 @@ public class Wall3D extends Object3DBranch {
     if (reverseOrder) {
       geometryInfo.reverse();
     }
-    // Generate normals
-    NormalGenerator normalGenerator = new NormalGenerator();
-    if (roundWall) {
-      normalGenerator.setCreaseAngle(0);
-    }
-    normalGenerator.generateNormals(geometryInfo);
-    return geometryInfo.getIndexedGeometryArray ();
-  }
-
-  /**
-   * Returns the geometry of the top part of a wall or a baseboard.
-   */
-  private Geometry createTopPartGeometry(float [][] points,
-                                         double cosWallYawAngle, double sinWallYawAngle,
-                                         double topLineAlpha, double topLineBeta,
-                                         boolean roundWall) {
-    Point3f [] coords = new Point3f [points.length];
-    for (int i = 0; i < points.length; i++) {
-      double xTopPointWithZeroYaw = cosWallYawAngle * points [i][0] + sinWallYawAngle * points [i][1];
-      float topY = (float)(topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
-      coords [i] = new Point3f(points [i][0], topY, points [i][1]);
-    }
-    GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
-    geometryInfo.setCoordinates (coords);
-    geometryInfo.setStripCounts(new int [] {coords.length});
     // Generate normals
     NormalGenerator normalGenerator = new NormalGenerator();
     if (roundWall) {
@@ -1023,9 +1001,8 @@ public class Wall3D extends Object3DBranch {
                                                        Wall wall, List<Geometry> wallGeometries,
                                                        List<Geometry> wallTopGeometries,
                                                        float [][] wallSidePoints,
-                                                       float wallElevation,
                                                        double cosWallYawAngle, double sinWallYawAngle,
-                                                       double topLineAlpha, double topLineBeta,
+                                                       ElevationPlane wallBottom, ElevationPlane wallTop,
                                                        HomeTexture texture, float [] textureReferencePoint,
                                                        int wallSide) {
     if (doorOrWindow.getModelTransformations() != null) {
@@ -1073,20 +1050,16 @@ public class Wall3D extends Object3DBranch {
       Transform3D invertedFrontAreaTransform = new Transform3D();
       invertedFrontAreaTransform.invert(frontAreaTransform);
       GeneralPath wallPath = new GeneralPath();
-      Point3f wallPoint = new Point3f(wallFirstPoint [0], wallElevation, wallFirstPoint [1]);
+      Point3f wallPoint = createCoordinateAtPoint(wallFirstPoint, wallBottom);
       invertedFrontAreaTransform.transform(wallPoint);
       wallPath.moveTo(wallPoint.x, wallPoint.y);
-      wallPoint = new Point3f(wallSecondPoint [0], wallElevation, wallSecondPoint [1]);
+      wallPoint = createCoordinateAtPoint(wallSecondPoint, wallBottom);
       invertedFrontAreaTransform.transform(wallPoint);
       wallPath.lineTo(wallPoint.x, wallPoint.y);
-      Point3f topWallPoint1 = new Point3f(wallSecondPoint [0],
-          getWallPointElevation(wallSecondPoint [0], wallSecondPoint [1],
-              cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta), wallSecondPoint [1]);
+      Point3f topWallPoint1 = createCoordinateAtPoint(wallSecondPoint, wallTop);
       invertedFrontAreaTransform.transform(topWallPoint1);
       wallPath.lineTo(topWallPoint1.x, topWallPoint1.y);
-      Point3f topWallPoint2 = new Point3f(wallFirstPoint [0],
-          getWallPointElevation(wallFirstPoint [0], wallFirstPoint [1],
-              cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta), wallFirstPoint [1]);
+      Point3f topWallPoint2 = createCoordinateAtPoint(wallFirstPoint, wallTop);
       invertedFrontAreaTransform.transform(topWallPoint2);
       wallPath.lineTo(topWallPoint2.x, topWallPoint2.y);
       wallPath.closePath();
@@ -1284,18 +1257,37 @@ public class Wall3D extends Object3DBranch {
   }
 
   /**
+   * Returns the elevation of the wall bottom at its start.
+   */
+  private float getWallBottomElevationAtStart() {
+    Wall wall = (Wall)getUserData();
+    if (!wall.isFloating()) {
+      return getWallElevation(false);
+    }
+    return getWallElevation(true) + wall.getElevationOrDefault();
+  }
+
+  /**
+   * Returns the elevation of the wall bottom at its start.
+   */
+  private float getWallBottomElevationAtEnd() {
+    Wall wall = (Wall)getUserData();
+    if (!wall.isFloating()) {
+      return getWallElevation(false);
+    }
+    return getWallElevation(true) + wall.getElevationAtEndOrDefault();
+  }
+
+  /**
    * Returns the elevation of the wall top at its start.
    */
   private float getWallTopElevationAtStart() {
-    Float wallHeight = ((Wall)getUserData()).getHeight();
-    float wallHeightAtStart;
-    if (wallHeight != null) {
-      wallHeightAtStart = wallHeight + getWallElevation(false) + getFloorThicknessBottomWall();
-    } else {
-      // If wall height isn't set, use home wall height
-      wallHeightAtStart = getHome().getWallHeight() + getWallElevation(false) + getFloorThicknessBottomWall();
+    Wall wall = (Wall)getUserData();
+    float wallHeightAtStart = wall.getHeightOrDefault(getHome().getWallHeight());
+    if (!wall.isFloating()) {
+      wallHeightAtStart += getFloorThicknessBottomWall();
     }
-    return wallHeightAtStart + getTopElevationShift();
+    return wallHeightAtStart + getWallBottomElevationAtStart() + getTopElevationShift();
   }
 
   private float getTopElevationShift() {
@@ -1315,12 +1307,11 @@ public class Wall3D extends Object3DBranch {
    */
   private float getWallTopElevationAtEnd() {
     Wall wall = (Wall)getUserData();
-    if (wall.isTrapezoidal()) {
-      return wall.getHeightAtEnd() + getWallElevation(false) + getFloorThicknessBottomWall() + getTopElevationShift();
-    } else {
-      // If the wall isn't trapezoidal, use same height as at wall start
-      return getWallTopElevationAtStart();
+    float wallHeightAtEnd = wall.getHeightAtEndOrDefault(getHome().getWallHeight());
+    if (!wall.isFloating()) {
+      wallHeightAtEnd += getFloorThicknessBottomWall();
     }
+    return wallHeightAtEnd + getWallBottomElevationAtEnd() + getTopElevationShift();
   }
 
   /**
@@ -1346,37 +1337,24 @@ public class Wall3D extends Object3DBranch {
     int [] indices = new int [(wallPoints.length + 1) * 2
                               + (leftSideBaseboard != null ? 8 : 4)
                               + (rightSideBaseboard != null ? 8 : 4)];
-    // Contour at bottom
     int j = 0, k = 0;
-    for (int i = 0; i < wallPoints.length; i++, j++) {
-      selectionCoordinates [j] = new Point3f(wallPointsIncludingBaseboards [i][0], wallElevation, wallPointsIncludingBaseboards [i][1]);
+
+    // Contour at bottom
+    ElevationPlane wallBottom = ElevationPlane.create(wall.getXStart(), wall.getYStart(),
+                                                      getWallBottomElevationAtStart(),
+                                                      wall.getXEnd(), wall.getYEnd(),
+                                                      getWallBottomElevationAtEnd());
+    for (int i = 0; i < wallPointsIncludingBaseboards.length; i++, j++) {
+      selectionCoordinates [j] = createCoordinateAtPoint(wallPointsIncludingBaseboards [i], wallBottom);
       indices [k++] = j;
     }
     indices [k++] = 0;
 
-    // Compute wall angles and top line factors to generate top contour
-    float topElevationAtStart = getWallTopElevationAtStart();
-    float topElevationAtEnd = getWallTopElevationAtEnd();
-    double wallYawAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), wall.getXEnd() - wall.getXStart());
-    final double cosWallYawAngle = Math.cos(wallYawAngle);
-    final double sinWallYawAngle = Math.sin(wallYawAngle);
-    double wallXStartWithZeroYaw = cosWallYawAngle * wall.getXStart() + sinWallYawAngle * wall.getYStart();
-    double wallXEndWithZeroYaw = cosWallYawAngle * wall.getXEnd() + sinWallYawAngle * wall.getYEnd();
-    final double topLineAlpha;
-    final double topLineBeta;
-    if (topElevationAtStart == topElevationAtEnd) {
-      topLineAlpha = 0;
-      topLineBeta = topElevationAtStart;
-    } else {
-      topLineAlpha = (topElevationAtEnd - topElevationAtStart) / (wallXEndWithZeroYaw - wallXStartWithZeroYaw);
-      topLineBeta = topElevationAtStart - topLineAlpha * wallXStartWithZeroYaw;
-    }
-
     // Contour at top
+    ElevationPlane wallTop = ElevationPlane.create(wall.getXStart(), wall.getYStart(), getWallTopElevationAtStart(),
+                                                   wall.getXEnd(), wall.getYEnd(), getWallTopElevationAtEnd());
     for (int i = 0; i < wallPoints.length; i++, j++) {
-      double xTopPointWithZeroYaw = cosWallYawAngle * wallPoints [i][0] + sinWallYawAngle * wallPoints [i][1];
-      float topY = (float)(topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
-      selectionCoordinates [j] = new Point3f(wallPoints [i][0], topY, wallPoints [i][1]);
+      selectionCoordinates [j] = createCoordinateAtPoint(wallPoints [i], wallTop);
       indices [k++] = j;
     }
     indices [k++] = wallPoints.length;
@@ -1385,36 +1363,44 @@ public class Wall3D extends Object3DBranch {
     indices [k++] = 0;
     if (leftSideBaseboard != null) {
       float leftBaseboardHeight = getBaseboardTopElevation(leftSideBaseboard);
-      selectionCoordinates [j] = new Point3f(wallPointsIncludingBaseboards [0][0], Math.min(leftBaseboardHeight, topElevationAtStart), wallPointsIncludingBaseboards [0][1]);
+      selectionCoordinates [j] = createClampedCoordinateAtPoint(wallPointsIncludingBaseboards [0], wallTop,
+                                                                Float.NEGATIVE_INFINITY, leftBaseboardHeight);
       indices [k++] = j++;
-      selectionCoordinates [j] = new Point3f(wallPoints [0][0], Math.min(leftBaseboardHeight, topElevationAtStart), wallPoints [0][1]);
+      selectionCoordinates [j] = createClampedCoordinateAtPoint(wallPoints [0], wallTop,
+                                                                Float.NEGATIVE_INFINITY, leftBaseboardHeight);
       indices [k++] = j++;
     }
     indices [k++] = wallPoints.length;
     indices [k++] = wallPoints.length / 2 - 1;
     if (leftSideBaseboard != null) {
       float leftBaseboardHeight = getBaseboardTopElevation(leftSideBaseboard);
-      selectionCoordinates [j] = new Point3f(wallPointsIncludingBaseboards [wallPoints.length / 2 - 1][0], Math.min(leftBaseboardHeight, topElevationAtEnd), wallPointsIncludingBaseboards [wallPoints.length / 2 - 1][1]);
+      selectionCoordinates [j] = createClampedCoordinateAtPoint(wallPointsIncludingBaseboards [wallPoints.length / 2 - 1], wallTop,
+                                                                Float.NEGATIVE_INFINITY, leftBaseboardHeight);
       indices [k++] = j++;
-      selectionCoordinates [j] = new Point3f(wallPoints [wallPoints.length / 2 - 1][0], Math.min(leftBaseboardHeight, topElevationAtEnd), wallPoints [wallPoints.length / 2 - 1][1]);
+      selectionCoordinates [j] = createClampedCoordinateAtPoint(wallPoints [wallPoints.length / 2 - 1], wallTop,
+                                                                Float.NEGATIVE_INFINITY, leftBaseboardHeight);
       indices [k++] = j++;
     }
     indices [k++] = wallPoints.length + wallPoints.length / 2 - 1;
     indices [k++] = wallPoints.length - 1;
     if (rightSideBaseboard != null) {
       float rightBaseboardHeight = getBaseboardTopElevation(rightSideBaseboard);
-      selectionCoordinates [j] = new Point3f(wallPointsIncludingBaseboards [wallPoints.length - 1][0], Math.min(rightBaseboardHeight, topElevationAtStart), wallPointsIncludingBaseboards [wallPoints.length - 1][1]);
+      selectionCoordinates [j] = createClampedCoordinateAtPoint(wallPointsIncludingBaseboards [wallPoints.length - 1], wallTop,
+                                                                Float.NEGATIVE_INFINITY, rightBaseboardHeight);
       indices [k++] = j++;
-      selectionCoordinates [j] = new Point3f(wallPoints [wallPoints.length - 1][0], Math.min(rightBaseboardHeight, topElevationAtStart), wallPoints [wallPoints.length - 1][1]);
+      selectionCoordinates [j] = createClampedCoordinateAtPoint(wallPoints [wallPoints.length - 1], wallTop,
+                                                                Float.NEGATIVE_INFINITY, rightBaseboardHeight);
       indices [k++] = j++;
     }
     indices [k++] = 2 * wallPoints.length - 1;
     indices [k++] = wallPoints.length / 2;
     if (rightSideBaseboard != null) {
       float rightBaseboardHeight = getBaseboardTopElevation(rightSideBaseboard);
-      selectionCoordinates [j] = new Point3f(wallPointsIncludingBaseboards [wallPoints.length / 2][0], Math.min(rightBaseboardHeight, topElevationAtEnd), wallPointsIncludingBaseboards [wallPoints.length / 2][1]);
+      selectionCoordinates [j] = createClampedCoordinateAtPoint(wallPointsIncludingBaseboards [wallPoints.length / 2], wallTop,
+                                                                Float.NEGATIVE_INFINITY, rightBaseboardHeight);
       indices [k++] = j++;
-      selectionCoordinates [j] = new Point3f(wallPoints [wallPoints.length / 2][0], Math.min(rightBaseboardHeight, topElevationAtEnd), wallPoints [wallPoints.length / 2][1]);
+      selectionCoordinates [j] = createClampedCoordinateAtPoint(wallPoints [wallPoints.length / 2], wallTop,
+                                                                Float.NEGATIVE_INFINITY, rightBaseboardHeight);
       indices [k++] = j++;
     }
     indices [k++] = wallPoints.length + wallPoints.length / 2;
@@ -1542,6 +1528,148 @@ public class Wall3D extends Object3DBranch {
     HomeEnvironment.DrawingMode drawingMode = getHome().getEnvironment().getDrawingMode();
     renderingAttributes.setVisible(drawingMode == HomeEnvironment.DrawingMode.OUTLINE
         || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE);
+  }
+
+  /**
+   * The plane of a horizontal part of a wall or baseboard.
+   */
+  private static abstract class ElevationPlane {
+
+    /**
+     * Gets the elevation at the point specified by
+     * <code>x</code> and <code>y</code>.
+     */
+    public abstract float getElevationAtPoint(float x, float y);
+
+    /**
+     * Gets the elevation at the specified point.
+     * <p>
+     * <code>point</code> should be an array containing two values;
+     * the value at index 0 is <code>x</code> and the value at
+     * index 1 is <code>y</code>.
+     */
+    public float getElevationAtPoint(float [] point) {
+      return getElevationAtPoint(point [0], point [1]);
+    }
+
+    /**
+     * Creates a level elevation plane.
+     */
+    public static ElevationPlane create(float elevation) {
+      return new LevelPlane(elevation);
+    }
+
+    /**
+     * Creates an elevation plane that may be sloped or level.
+     */
+    public static ElevationPlane create(float startX, float startY,
+                                        float startElevation,
+                                        float endX, float endY,
+                                        float endElevation) {
+      if (startElevation == endElevation
+          || (startX == endX && startY == endY)) {
+        return new LevelPlane(startElevation);
+      }
+
+      final double x0 = (double) startX;
+      final double y0 = (double) startY;
+      final double z0 = (double) startElevation;
+      final double x1 = (double) endX;
+      final double y1 = (double) endY;
+      final double z1 = (double) endElevation;
+      final double alpha;
+      final double beta;
+      final double gamma;
+      //
+      // computed using wolfram alpha.
+      //
+      // reduce[{x0 != x1, y0 != y1, z0 != z1,
+      //         z0 = a*x0 + b*y0 + g,
+      //         z1 = a*x1 + b*y1 + g,
+      //         z0 = a*(x0 - (y1 - y0)) + b*(y0 + (x1 - x0)) + g},
+      //        {a, b, g}, reals]
+      //
+      // third constraint comes from fact that the elevation is constant
+      // for all points along a line perpendicular to the wall line.
+      //
+      // here we pick a point that's easy to calculate:
+      // <y0 - y1, x1 - x0> is perpendicular to <x1 - x0, y1 - y0>
+      // so add that vector to (x0, y0) to to find a third point
+      // that has the same elevation as (x0, y0).
+      //
+      if (startY == endY) {
+        assert startX != endX; // should've already returned LevelPlane above
+        alpha = (z1 - z0) / (x1 - x0);
+        beta = 0;
+        gamma = (x1 * z0 - x0 * z1)  / (x1 - x0);
+      } else if (startX == endX) {
+        alpha = 0;
+        beta = (z1 - z0) / (y1 - y0);
+        gamma = (y1 * z0 - y0 * z1)  / (y1 - y0);
+      } else {
+        final double dsq = (x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0);
+        alpha = ( (z1 - z0) * (x1 - x0) ) / dsq;
+        beta = ( (z1 - z0) * (y1 - y0) ) / dsq;
+        gamma = ( (x1 - x0) * (x1 * z0 - x0 * z1) + (y1 - y0) * (y1 * z0 - y0 * z1) ) / dsq;
+      }
+
+      return new SlopedPlane(alpha, beta, gamma);
+    }
+
+    private static final class LevelPlane
+      extends ElevationPlane {
+
+      private final float elevation;
+
+      public LevelPlane(float elevation) {
+        this.elevation = elevation;
+      }
+
+      @Override
+      public float getElevationAtPoint(float [] point) {
+        return elevation;
+      }
+
+      @Override
+      public float getElevationAtPoint(float x, float y) {
+        return elevation;
+      }
+    }
+
+    private static final class SlopedPlane
+      extends ElevationPlane {
+
+      private final double alpha;
+      private final double beta;
+      private final double gamma;
+
+      public SlopedPlane(double alpha, double beta, double gamma) {
+        this.alpha = alpha;
+        this.beta = beta;
+        this.gamma = gamma;
+      }
+
+      @Override
+      public float getElevationAtPoint(float x, float y) {
+        return (float) (alpha * x + beta * y + gamma);
+      }
+    }
+  }
+
+  /**
+   * Creates a 3d coordinate from a point and elevation plane.
+   */
+  private static Point3f createCoordinateAtPoint(float [] point, ElevationPlane plane) {
+    return new Point3f(point [0], plane.getElevationAtPoint(point), point [1]);
+  }
+
+  /**
+   * Creates a 3d coordinate from a point and elevation plane, with a specified minimum and maximum elevation.
+   */
+  private static Point3f createClampedCoordinateAtPoint(float [] point, ElevationPlane plane,
+                                                        float minElevation, float maxElevation) {
+    float elevation = plane.getElevationAtPoint(point);
+    return new Point3f(point [0], Math.min(maxElevation, Math.max(minElevation, elevation)), point [1]);
   }
 
   /**

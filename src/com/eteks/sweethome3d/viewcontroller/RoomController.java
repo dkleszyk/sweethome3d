@@ -645,14 +645,17 @@ public class RoomController implements Controller {
       Area roomArea = new Area(getPath(room.getPoints(), true));
       if (defaultWallSides != null) {
         for (WallSide wallSide : defaultWallSides) {
-          if (isRoomItersectingWallSide(wallSide.getWall().getPoints(), wallSide.getSide(), roomArea)) {
+          final Wall wall = wallSide.getWall();
+          if (!wall.isFloating()
+              && isRoomItersectingWallSide(wall.getPoints(), wallSide.getSide(), roomArea)) {
             wallSides.add(wallSide);
           }
         }
       } else {
         for (Wall wall : this.home.getWalls()) {
           if ((wall.getLevel() == null || wall.getLevel().isViewable())
-              && wall.isAtLevel(this.home.getSelectedLevel())) {
+              && wall.isAtLevel(this.home.getSelectedLevel())
+              && !wall.isFloating()) {
             float [][] wallPoints = wall.getPoints();
             if (isRoomItersectingWallSide(wallPoints, WallSide.LEFT_SIDE, roomArea)) {
               wallSides.add(new WallSide(wall, WallSide.LEFT_SIDE));
