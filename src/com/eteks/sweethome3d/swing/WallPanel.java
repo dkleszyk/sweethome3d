@@ -799,7 +799,7 @@ public class WallPanel extends JPanel implements DialogView {
         new ControllerPropertyChangeListener(this) {
           public void controllerPropertyChange(PropertyChangeEvent ev) {
             floatingWallCheckBox.setNullable(ev.getNewValue() == null);
-            floatingWallCheckBox.setValue(logicalNot((Boolean)ev.getNewValue()));
+            floatingWallCheckBox.setValue((Boolean)ev.getNewValue());
           }
         });
 
@@ -1335,7 +1335,7 @@ public class WallPanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(WallController.Property.FLOATING,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            elevationPanel.setVisible(Boolean.TRUE.equals(ev.getNewValue()));
+            elevationPanel.setVisible(!Boolean.FALSE.equals(ev.getNewValue()));
 
             final Window window = SwingUtilities.getWindowAncestor(wallPanel);
             if (window != null) {
@@ -1345,7 +1345,7 @@ public class WallPanel extends JPanel implements DialogView {
             }
           }
         });
-    elevationPanel.setVisible(Boolean.TRUE.equals(controller.isFloating()));
+    elevationPanel.setVisible(!Boolean.FALSE.equals(controller.isFloating()));
   }
 
   private JPanel createTitledPanel(String title, JComponent [] components, boolean horizontal) {

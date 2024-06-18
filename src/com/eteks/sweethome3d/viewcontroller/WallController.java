@@ -1409,11 +1409,11 @@ public class WallController implements Controller {
       this.propertyChangeSupport.firePropertyChange(Property.FLOATING.name(),
           oldFloating, floating);
 
-      if (Boolean.FALSE.equals(floating)) {
-        setRectangularElevation(0.0f);
-      } else if (Boolean.TRUE.equals(floating)) {
+      if (Boolean.TRUE.equals(floating)) {
         getLeftSideBaseboardController().setVisible(Boolean.FALSE);
         getRightSideBaseboardController().setVisible(Boolean.FALSE);
+      } else if (Boolean.FALSE.equals(floating)) {
+        setRectangularElevation(0.0f);
       } // else null
     }
   }
@@ -1426,7 +1426,7 @@ public class WallController implements Controller {
   }
 
   /**
-   * Sets all elevation properties at once.
+   * Sets all edited elevation properties of a wall at once.
    */
   private void setInitialElevationProperties(Boolean floating, WallShape elevationShape,
                                              Float rectangularElevation,
@@ -1437,15 +1437,13 @@ public class WallController implements Controller {
       slopingElevationAtEnd = null;
     }
 
-    if (floating != this.floating
-        && (floating == null || !floating.equals(this.floating))) {
+    if (floating != this.floating) {
       Boolean oldFloating = this.floating;
       this.floating = floating;
       this.propertyChangeSupport.firePropertyChange(Property.FLOATING.name(),
           oldFloating, floating);
     }
-    if (elevationShape != this.elevationShape
-        && (elevationShape == null || !elevationShape.equals(this.elevationShape))) {
+    if (elevationShape != this.elevationShape) {
       WallShape oldElevationShape = this.elevationShape;
       this.elevationShape = elevationShape;
       this.propertyChangeSupport.firePropertyChange(Property.ELEVATION_SHAPE.name(),
