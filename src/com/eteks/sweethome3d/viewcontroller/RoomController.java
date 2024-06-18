@@ -646,7 +646,7 @@ public class RoomController implements Controller {
       if (defaultWallSides != null) {
         for (WallSide wallSide : defaultWallSides) {
           final Wall wall = wallSide.getWall();
-          if (wall.isAttachToFloor()
+          if (!wall.isFloating()
               && isRoomItersectingWallSide(wall.getPoints(), wallSide.getSide(), roomArea)) {
             wallSides.add(wallSide);
           }
@@ -655,7 +655,7 @@ public class RoomController implements Controller {
         for (Wall wall : this.home.getWalls()) {
           if ((wall.getLevel() == null || wall.getLevel().isViewable())
               && wall.isAtLevel(this.home.getSelectedLevel())
-              && wall.isAttachToFloor()) {
+              && !wall.isFloating()) {
             float [][] wallPoints = wall.getPoints();
             if (isRoomItersectingWallSide(wallPoints, WallSide.LEFT_SIDE, roomArea)) {
               wallSides.add(new WallSide(wall, WallSide.LEFT_SIDE));

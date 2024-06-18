@@ -2479,7 +2479,7 @@ public class PlanController extends FurnitureController implements Controller {
               || Wall.Property.HEIGHT_AT_END.name().equals(propertyName)
               || Wall.Property.ELEVATION.name().equals(propertyName)
               || Wall.Property.ELEVATION_AT_END.name().equals(propertyName)
-              || Wall.Property.ATTACH_TO_FLOOR.name().equals(propertyName)
+              || Wall.Property.FLOATING.name().equals(propertyName)
               || Wall.Property.LEFT_SIDE_BASEBOARD.name().equals(propertyName)
               || Wall.Property.RIGHT_SIDE_BASEBOARD.name().equals(propertyName)) {
             resetAreaCache();
@@ -8575,7 +8575,7 @@ public class PlanController extends FurnitureController implements Controller {
       Area wallsArea = new Area();
       Level selectedLevel = this.home.getSelectedLevel();
       for (Wall wall : this.home.getWalls()) {
-        if (wall.isAtLevel(selectedLevel) && wall.isAttachToFloor()) {
+        if (wall.isAtLevel(selectedLevel) && !wall.isFloating()) {
           wallsArea.add(new Area(getPath(wall.getPoints(includeBaseboards))));
         }
       }

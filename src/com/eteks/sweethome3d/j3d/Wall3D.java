@@ -1261,7 +1261,7 @@ public class Wall3D extends Object3DBranch {
    */
   private float getWallBottomElevationAtStart() {
     Wall wall = (Wall)getUserData();
-    if (wall.isAttachToFloor()) {
+    if (!wall.isFloating()) {
       return getWallElevation(false);
     }
     return getWallElevation(true) + wall.getElevationOrDefault();
@@ -1272,7 +1272,7 @@ public class Wall3D extends Object3DBranch {
    */
   private float getWallBottomElevationAtEnd() {
     Wall wall = (Wall)getUserData();
-    if (wall.isAttachToFloor()) {
+    if (!wall.isFloating()) {
       return getWallElevation(false);
     }
     return getWallElevation(true) + wall.getElevationAtEndOrDefault();
@@ -1284,7 +1284,7 @@ public class Wall3D extends Object3DBranch {
   private float getWallTopElevationAtStart() {
     Wall wall = (Wall)getUserData();
     float wallHeightAtStart = wall.getHeightOrDefault(getHome().getWallHeight());
-    if (wall.isAttachToFloor()) {
+    if (!wall.isFloating()) {
       wallHeightAtStart += getFloorThicknessBottomWall();
     }
     return wallHeightAtStart + getWallBottomElevationAtStart() + getTopElevationShift();
@@ -1308,7 +1308,7 @@ public class Wall3D extends Object3DBranch {
   private float getWallTopElevationAtEnd() {
     Wall wall = (Wall)getUserData();
     float wallHeightAtEnd = wall.getHeightAtEndOrDefault(getHome().getWallHeight());
-    if (wall.isAttachToFloor()) {
+    if (!wall.isFloating()) {
       wallHeightAtEnd += getFloorThicknessBottomWall();
     }
     return wallHeightAtEnd + getWallBottomElevationAtEnd() + getTopElevationShift();

@@ -610,7 +610,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
           if (wall.getElevationAtEnd() != null) {
             writer.writeFloatAttribute("elevationAtEnd", wall.getElevationAtEnd());
           }
-          if (!wall.isAttachToFloor()) {
+          if (wall.isFloating()) {
             writer.writeAttribute("floating", String.valueOf(true));
           }
           writer.writeFloatAttribute("thickness", wall.getThickness());

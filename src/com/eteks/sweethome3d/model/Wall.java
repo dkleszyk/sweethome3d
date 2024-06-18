@@ -40,7 +40,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
                         THICKNESS, HEIGHT, HEIGHT_AT_END,
                         LEFT_SIDE_COLOR, LEFT_SIDE_TEXTURE, LEFT_SIDE_SHININESS, LEFT_SIDE_BASEBOARD,
                         RIGHT_SIDE_COLOR, RIGHT_SIDE_TEXTURE, RIGHT_SIDE_SHININESS, RIGHT_SIDE_BASEBOARD,
-                        PATTERN, TOP_COLOR, LEVEL, ELEVATION, ELEVATION_AT_END, ATTACH_TO_FLOOR}
+                        PATTERN, TOP_COLOR, LEVEL, ELEVATION, ELEVATION_AT_END, FLOATING}
 
   private static final long serialVersionUID = 1L;
 
@@ -68,7 +68,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   private Level               level;
   private Float               elevation;
   private Float               elevationAtEnd;
-  private boolean             attachToFloor = true;
+  private boolean             floating;
 
   private transient Shape      shapeCache;
   private transient float []   arcCircleCenterCache;
@@ -540,21 +540,21 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Returns whether this wall attaches to the floor.
+   * Returns whether this wall is detached from the floor.
    */
-  public boolean isAttachToFloor() {
-    return this.attachToFloor;
+  public boolean isFloating() {
+    return this.floating;
   }
 
   /**
-   * Sets whether this wall attaches to the floor. Once this wall is updated,
+   * Sets whether this wall is detached from the floor. Once this wall is updated,
    * listeners added to this wall will receive a change notification.
    */
-  public void setAttachToFloor(boolean attachToFloor) {
-    if (attachToFloor != this.attachToFloor) {
-      boolean oldAttachToFloor = this.attachToFloor;
-      this.attachToFloor = attachToFloor;
-      firePropertyChange(Property.ATTACH_TO_FLOOR.name(), oldAttachToFloor, attachToFloor);
+  public void setFloating(boolean floating) {
+    if (floating != this.floating) {
+      boolean oldFloating = this.floating;
+      this.floating = floating;
+      firePropertyChange(Property.FLOATING.name(), oldFloating, floating);
     }
   }
 

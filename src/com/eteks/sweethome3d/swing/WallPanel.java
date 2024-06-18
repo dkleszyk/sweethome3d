@@ -785,17 +785,17 @@ public class WallPanel extends JPanel implements DialogView {
           }
         });
 
-    // Create floor attachment label and its check box bound to ATTACH_TO_FLOOR controller property
+    // Create floating wall label and its check box bound to FLOATING controller property
     this.floatingWallCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences,
         WallPanel.class, "floatingWallCheckBox.text"));
-    this.floatingWallCheckBox.setNullable(controller.isAttachToFloor() == null);
-    this.floatingWallCheckBox.setValue(logicalNot(controller.isAttachToFloor()));
+    this.floatingWallCheckBox.setNullable(controller.isFloating() == null);
+    this.floatingWallCheckBox.setValue(controller.isFloating());
     this.floatingWallCheckBox.addChangeListener(new WallPanelChangeListener(this) {
         public void doStateChanged(ChangeEvent ev) {
-          controller.setAttachToFloor(logicalNot(floatingWallCheckBox.getValue()));
+          controller.setFloating(floatingWallCheckBox.getValue());
         }
       });
-    controller.addPropertyChangeListener(WallController.Property.ATTACH_TO_FLOOR,
+    controller.addPropertyChangeListener(WallController.Property.FLOATING,
         new ControllerPropertyChangeListener(this) {
           public void controllerPropertyChange(PropertyChangeEvent ev) {
             floatingWallCheckBox.setNullable(ev.getNewValue() == null);
@@ -1331,11 +1331,11 @@ public class WallPanel extends JPanel implements DialogView {
     this.arcExtentLabel.setVisible(controller.isEditablePoints());
     this.arcExtentSpinner.setVisible(controller.isEditablePoints());
 
-    // Make elevationPanel visible depending on floor attachment property
-    controller.addPropertyChangeListener(WallController.Property.ATTACH_TO_FLOOR,
+    // Make elevationPanel visible depending on floating property
+    controller.addPropertyChangeListener(WallController.Property.FLOATING,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            elevationPanel.setVisible(!Boolean.TRUE.equals(ev.getNewValue()));
+            elevationPanel.setVisible(Boolean.TRUE.equals(ev.getNewValue()));
 
             final Window window = SwingUtilities.getWindowAncestor(wallPanel);
             if (window != null) {
@@ -1345,7 +1345,7 @@ public class WallPanel extends JPanel implements DialogView {
             }
           }
         });
-    elevationPanel.setVisible(!Boolean.TRUE.equals(controller.isAttachToFloor()));
+    elevationPanel.setVisible(Boolean.TRUE.equals(controller.isFloating()));
   }
 
   private JPanel createTitledPanel(String title, JComponent [] components, boolean horizontal) {
@@ -1483,9 +1483,5 @@ public class WallPanel extends JPanel implements DialogView {
     }
 
     public abstract void doPropertyChange(PropertyChangeEvent evt);
-  }
-
-  private static Boolean logicalNot(Boolean b) {
-    return b == null ? null : !((boolean)b);
   }
 }
