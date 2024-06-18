@@ -1284,20 +1284,20 @@ public class WallPanel extends JPanel implements DialogView {
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
 
     // Eighth row
-    JPanel ticknessAndArcExtentPanel = new JPanel(new GridBagLayout());
-    ticknessAndArcExtentPanel.add(this.thicknessLabel, new GridBagConstraints(
+    JPanel thicknessAndArcExtentPanel = new JPanel(new GridBagLayout());
+    thicknessAndArcExtentPanel.add(this.thicknessLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, standardGap), 0, 0));
-    ticknessAndArcExtentPanel.add(this.thicknessSpinner, new GridBagConstraints(
+    thicknessAndArcExtentPanel.add(this.thicknessSpinner, new GridBagConstraints(
         1, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
-    ticknessAndArcExtentPanel.add(this.arcExtentLabel, new GridBagConstraints(
+    thicknessAndArcExtentPanel.add(this.arcExtentLabel, new GridBagConstraints(
         2, 0, 1, 1, 0, 0, labelAlignment,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, standardGap), 0, 0));
-    ticknessAndArcExtentPanel.add(this.arcExtentSpinner, new GridBagConstraints(
+    thicknessAndArcExtentPanel.add(this.arcExtentSpinner, new GridBagConstraints(
         3, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    add(ticknessAndArcExtentPanel, new GridBagConstraints(
+    add(thicknessAndArcExtentPanel, new GridBagConstraints(
         0, 7, 2, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.NONE, new Insets(standardGap, 8, 10, 8), 0, 0));
 
