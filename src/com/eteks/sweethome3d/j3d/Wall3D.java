@@ -310,13 +310,16 @@ public class Wall3D extends Object3DBranch {
     final Float arcExtent = wall.getArcExtent();
     final boolean roundWall = arcExtent != null && arcExtent.floatValue() != 0;
     final double topLineAlpha;
-    final double topLineBeta;
     if (topElevationAtStart == topElevationAtEnd) {
       topLineAlpha = 0;
-      topLineBeta = topElevationAtStart;
     } else {
       topLineAlpha = (topElevationAtEnd - topElevationAtStart) / (wallXEndWithZeroYaw - wallXStartWithZeroYaw);
-      topLineBeta = topElevationAtStart - topLineAlpha * wallXStartWithZeroYaw;
+    }
+    final double bottomLineAlpha;
+    if (bottomElevationAtStart == bottomElevationAtEnd) {
+      bottomLineAlpha = 0;
+    } else {
+      bottomLineAlpha = (bottomElevationAtEnd - bottomElevationAtStart) / (wallXEndWithZeroYaw - wallXStartWithZeroYaw);
     }
     final ElevationPlane wallBottom = ElevationPlane.create(wall.getXStart(), wall.getYStart(),
                                                             bottomElevationAtStart,
@@ -449,7 +452,6 @@ public class Wall3D extends Object3DBranch {
             }
 
             if (points.size() > 2) {
-              float [][] wallPartPoints = points.toArray(new float[points.size()][]);
               List<HomePieceOfFurniture> doorsOrWindows = windowIntersection.getDoorsOrWindows();
               if (doorsOrWindows.size() > 1) {
                 // Sort superimposed doors and windows by elevation and height
@@ -468,76 +470,102 @@ public class Wall3D extends Object3DBranch {
                       }
                     });
               }
-              HomePieceOfFurniture lowestDoorOrWindow = doorsOrWindows.get(0);
-              float lowestDoorOrWindowElevation = lowestDoorOrWindow.getGroundElevation();
+
               // Generate geometry for wall part below window
-              if (lowestDoorOrWindowElevation > minBottomElevation) {
-                if (level != null
-                    && level.getElevation() != minBottomElevation
-                    && lowestDoorOrWindow.getElevation() < LEVEL_ELEVATION_SHIFT) {
-                  // Give more chance to an overlapping room floor to be displayed
-                  lowestDoorOrWindowElevation -= LEVEL_ELEVATION_SHIFT;
+              {
+                float [][] wallPartPoints = clonePoints(points);
+                HomePieceOfFurniture lowestDoorOrWindow = doorsOrWindows.get(0);
+                float lowestDoorOrWindowElevation = lowestDoorOrWindow.getGroundElevation();
+                if (lowestDoorOrWindowElevation > minBottomElevation
+                      && level != null
+                      && level.getElevation() != minBottomElevation
+                      && lowestDoorOrWindow.getElevation() < LEVEL_ELEVATION_SHIFT) {
+                    // Give more chance to an overlapping room floor to be displayed
+                    lowestDoorOrWindowElevation -= LEVEL_ELEVATION_SHIFT;
                 }
-                ElevationPlane doorOrWindowBottom = ElevationPlane.create(lowestDoorOrWindowElevation);
-                sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, wallBottom, doorOrWindowBottom,
-                                                              baseboard, texture, textureReferencePoint, wallSide));
-                bottomGeometries.add(createHorizontalPartGeometry(wallPartPoints, wallBottom, true, roundWall));
-                sideGeometries.add(createHorizontalPartGeometry(wallPartPoints, doorOrWindowBottom, false, roundWall));
+                boolean generateGeometry = true;
+                // Translate points of wall part above lowestDoorOrWindowElevation along sloping wall bottom
+                for (int i = 0; i < wallPartPoints.length; i++) {
+                  float wallElevationAtPoint = wallBottom.getElevationAtPoint(wallPartPoints [i]);
+                  if (lowestDoorOrWindowElevation < wallElevationAtPoint) {
+                    if (bottomLineAlpha == 0 || roundWall) {
+                      // Ignore geometry below window for flat wall or round sloping wall
+                      generateGeometry = false;
+                      break;
+                    }
+                    double translation = (lowestDoorOrWindowElevation - wallElevationAtPoint) / bottomLineAlpha;
+                    wallPartPoints [i][0] += (float)(translation * cosWallYawAngle);
+                    wallPartPoints [i][1] += (float)(translation * sinWallYawAngle);
+                  }
+                }
+                if (generateGeometry) {
+                  ElevationPlane doorOrWindowBottom = ElevationPlane.create(lowestDoorOrWindowElevation);
+                  sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, wallBottom, doorOrWindowBottom,
+                                                                baseboard, texture, textureReferencePoint, wallSide));
+                  bottomGeometries.add(createHorizontalPartGeometry(wallPartPoints, wallBottom, true, roundWall));
+                  sideGeometries.add(createHorizontalPartGeometry(wallPartPoints, doorOrWindowBottom, false, roundWall));
+                }
               }
 
               // Generate geometry for wall parts between superimposed windows
-              for (int i = 0; i < doorsOrWindows.size() - 1; ) {
-                HomePieceOfFurniture lowerDoorOrWindow = doorsOrWindows.get(i);
-                float lowerDoorOrWindowElevation = lowerDoorOrWindow.getGroundElevation();
-                HomePieceOfFurniture higherDoorOrWindow = doorsOrWindows.get(++i);
-                float higherDoorOrWindowElevation = higherDoorOrWindow.getGroundElevation();
-                // Ignore higher windows smaller than lower window
-                while (lowerDoorOrWindowElevation + lowerDoorOrWindow.getHeight() >= higherDoorOrWindowElevation + higherDoorOrWindow.getHeight()
-                    && ++i < doorsOrWindows.size()) {
-                  higherDoorOrWindow = doorsOrWindows.get(i);
-                }
-                if (i < doorsOrWindows.size()
-                    && lowerDoorOrWindowElevation + lowerDoorOrWindow.getHeight() < higherDoorOrWindowElevation) {
-                  ElevationPlane lowerDoorOrWindowTop = ElevationPlane.create(lowerDoorOrWindowElevation + lowerDoorOrWindow.getHeight());
-                  ElevationPlane higherDoorOrWindowBottom = ElevationPlane.create(higherDoorOrWindowElevation);
-                  sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, lowerDoorOrWindowTop, higherDoorOrWindowBottom,
-                                                                baseboard, texture, textureReferencePoint, wallSide));
-                  sideGeometries.add(createHorizontalPartGeometry(wallPartPoints, lowerDoorOrWindowTop, true, roundWall));
-                  sideGeometries.add(createHorizontalPartGeometry(wallPartPoints, higherDoorOrWindowBottom, false, roundWall));
+              {
+                float [][] wallPartPoints = clonePoints(points);
+                for (int i = 0; i < doorsOrWindows.size() - 1; ) {
+                  HomePieceOfFurniture lowerDoorOrWindow = doorsOrWindows.get(i);
+                  float lowerDoorOrWindowElevation = lowerDoorOrWindow.getGroundElevation();
+                  HomePieceOfFurniture higherDoorOrWindow = doorsOrWindows.get(++i);
+                  float higherDoorOrWindowElevation = higherDoorOrWindow.getGroundElevation();
+                  // Ignore higher windows smaller than lower window
+                  while (lowerDoorOrWindowElevation + lowerDoorOrWindow.getHeight() >= higherDoorOrWindowElevation + higherDoorOrWindow.getHeight()
+                      && ++i < doorsOrWindows.size()) {
+                    higherDoorOrWindow = doorsOrWindows.get(i);
+                  }
+                  if (i < doorsOrWindows.size()
+                      && lowerDoorOrWindowElevation + lowerDoorOrWindow.getHeight() < higherDoorOrWindowElevation) {
+                    ElevationPlane lowerDoorOrWindowTop = ElevationPlane.create(lowerDoorOrWindowElevation + lowerDoorOrWindow.getHeight());
+                    ElevationPlane higherDoorOrWindowBottom = ElevationPlane.create(higherDoorOrWindowElevation);
+                    sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, lowerDoorOrWindowTop, higherDoorOrWindowBottom,
+                                                                  baseboard, texture, textureReferencePoint, wallSide));
+                    sideGeometries.add(createHorizontalPartGeometry(wallPartPoints, lowerDoorOrWindowTop, true, roundWall));
+                    sideGeometries.add(createHorizontalPartGeometry(wallPartPoints, higherDoorOrWindowBottom, false, roundWall));
+                  }
                 }
               }
 
-              HomePieceOfFurniture highestDoorOrWindow = doorsOrWindows.get(doorsOrWindows.size() - 1);
-              float highestDoorOrWindowElevation = highestDoorOrWindow.getGroundElevation();
-              for (int i = doorsOrWindows.size() - 2; i >= 0; i--) {
-                HomePieceOfFurniture doorOrWindow = doorsOrWindows.get(i);
-                if (doorOrWindow.getGroundElevation() + doorOrWindow.getHeight() > highestDoorOrWindowElevation + highestDoorOrWindow.getHeight()) {
-                  highestDoorOrWindow = doorOrWindow;
-                }
-              }
-              float highestDoorOrWindowTopElevation = highestDoorOrWindowElevation + highestDoorOrWindow.getHeight();
-              boolean generateGeometry = true;
-              // Translate points of wall part under highestDoorOrWindowTopElevation along sloping wall top
-              for (int i = 0; i < wallPartPoints.length; i++) {
-                float wallElevationAtPoint = wallTop.getElevationAtPoint(wallPartPoints [i]);
-                if (highestDoorOrWindowTopElevation > wallElevationAtPoint) {
-                  if (topLineAlpha == 0 || roundWall) {
-                    // Ignore geometry above window for flat wall or round sloping wall
-                    generateGeometry = false;
-                    break;
-                  }
-                  double translation = (highestDoorOrWindowTopElevation - wallElevationAtPoint) / topLineAlpha;
-                  wallPartPoints [i][0] += (float)(translation * cosWallYawAngle);
-                  wallPartPoints [i][1] += (float)(translation * sinWallYawAngle);
-                }
-              }
               // Generate geometry for wall part above window
-              if (generateGeometry) {
-                ElevationPlane highestDoorOrWindowTop = ElevationPlane.create(highestDoorOrWindowTopElevation);
-                sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, highestDoorOrWindowTop, wallTop,
-                                                              baseboard, texture, textureReferencePoint, wallSide));
-                sideGeometries.add(createHorizontalPartGeometry(wallPartPoints, highestDoorOrWindowTop, true, roundWall));
-                topGeometries.add(createHorizontalPartGeometry(wallPartPoints, wallTop, false, roundWall));
+              {
+                float [][] wallPartPoints = clonePoints(points);
+                HomePieceOfFurniture highestDoorOrWindow = doorsOrWindows.get(doorsOrWindows.size() - 1);
+                float highestDoorOrWindowElevation = highestDoorOrWindow.getGroundElevation();
+                for (int i = doorsOrWindows.size() - 2; i >= 0; i--) {
+                  HomePieceOfFurniture doorOrWindow = doorsOrWindows.get(i);
+                  if (doorOrWindow.getGroundElevation() + doorOrWindow.getHeight() > highestDoorOrWindowElevation + highestDoorOrWindow.getHeight()) {
+                    highestDoorOrWindow = doorOrWindow;
+                  }
+                }
+                float highestDoorOrWindowTopElevation = highestDoorOrWindowElevation + highestDoorOrWindow.getHeight();
+                boolean generateGeometry = true;
+                // Translate points of wall part under highestDoorOrWindowTopElevation along sloping wall top
+                for (int i = 0; i < wallPartPoints.length; i++) {
+                  float wallElevationAtPoint = wallTop.getElevationAtPoint(wallPartPoints [i]);
+                  if (highestDoorOrWindowTopElevation > wallElevationAtPoint) {
+                    if (topLineAlpha == 0 || roundWall) {
+                      // Ignore geometry above window for flat wall or round sloping wall
+                      generateGeometry = false;
+                      break;
+                    }
+                    double translation = (highestDoorOrWindowTopElevation - wallElevationAtPoint) / topLineAlpha;
+                    wallPartPoints [i][0] += (float)(translation * cosWallYawAngle);
+                    wallPartPoints [i][1] += (float)(translation * sinWallYawAngle);
+                  }
+                }
+                if (generateGeometry) {
+                  ElevationPlane highestDoorOrWindowTop = ElevationPlane.create(highestDoorOrWindowTopElevation);
+                  sideGeometries.add(createVerticalPartGeometry(wall, wallPartPoints, highestDoorOrWindowTop, wallTop,
+                                                                baseboard, texture, textureReferencePoint, wallSide));
+                  sideGeometries.add(createHorizontalPartGeometry(wallPartPoints, highestDoorOrWindowTop, true, roundWall));
+                  topGeometries.add(createHorizontalPartGeometry(wallPartPoints, wallTop, false, roundWall));
+                }
               }
             }
             points.clear();
@@ -657,6 +685,17 @@ public class Wall3D extends Object3DBranch {
         }
       }
     }
+  }
+
+  /**
+   * Return a clone of the given list of <code>points</code>.
+   */
+  private float [][] clonePoints(List<float []> points) {
+    float [][] clonedPoints = new float [points.size()][];
+    for (int i = 0; i < points.size(); i++) {
+      clonedPoints [i] = points.get(i).clone();
+    }
+    return clonedPoints;
   }
 
   /**
