@@ -1743,6 +1743,13 @@ public class PlanController extends FurnitureController implements Controller {
         wall.setHeightAtEnd(height);
       }
 
+      Float elevationAtEnd = wall.getElevationAtEnd();
+      if (elevationAtEnd != null) {
+        Float elevation = wall.getElevation();
+        wall.setElevation(elevationAtEnd);
+        wall.setElevationAtEnd(elevation);
+      }
+
       reverseWallSidesStyle(wall);
     }
   }
