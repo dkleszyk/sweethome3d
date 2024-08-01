@@ -780,20 +780,20 @@ public enum LengthUnit {
    * A decimal format for inch lengths with fraction.
    */
   private static class InchFractionFormat extends DecimalFormat {
-    private static final char [] INCH_FRACTION_CHARACTERS = {'\u215b',   // 1/8
-                                                             '\u00bc',   // 1/4
-                                                             '\u215c',   // 3/8
-                                                             '\u00bd',   // 1/2
-                                                             '\u215d',   // 5/8
-                                                             '\u00be',   // 3/4
-                                                             '\u215e'};  // 7/8
-    private static final String [] INCH_FRACTION_STRINGS  = {"1/8",
-                                                             "1/4",
-                                                             "3/8",
-                                                             "1/2",
-                                                             "5/8",
-                                                             "3/4",
-                                                             "7/8"};
+    private static final char [] EIGHTH_FRACTION_CHARACTERS = {'\u215b',   // 1/8
+                                                               '\u00bc',   // 1/4
+                                                               '\u215c',   // 3/8
+                                                               '\u00bd',   // 1/2
+                                                               '\u215d',   // 5/8
+                                                               '\u00be',   // 3/4
+                                                               '\u215e'};  // 7/8
+    private static final String [] EIGHTH_FRACTION_STRINGS  = {"1/8",
+                                                               "1/4",
+                                                               "3/8",
+                                                               "1/2",
+                                                               "5/8",
+                                                               "3/4",
+                                                               "7/8"};
 
     private final boolean       footInch;
     private final MessageFormat positiveFootFormat;
@@ -861,10 +861,10 @@ public enum LengthUnit {
         } else {
           if (this.footInch) {
             (number >= 0 ? this.positiveFootInchFractionFormat : this.negativeFootInchFractionFormat).format(
-                new Object [] {feet, integerPart, INCH_FRACTION_CHARACTERS [eighth - 1]}, result, fieldPosition);
+                new Object [] {feet, integerPart, EIGHTH_FRACTION_CHARACTERS [eighth - 1]}, result, fieldPosition);
           } else {
             (number >= 0 ? this.positiveInchFractionFormat : this.negativeInchFractionFormat).format(
-                new Object [] {feet * 12 + integerPart, INCH_FRACTION_CHARACTERS [eighth - 1]}, result, fieldPosition);
+                new Object [] {feet * 12 + integerPart, EIGHTH_FRACTION_CHARACTERS [eighth - 1]}, result, fieldPosition);
           }
         }
       } else {
@@ -961,9 +961,9 @@ public enum LengthUnit {
       String fractionString = text.length() - numberPosition.getIndex() >= 3
           ? text.substring(numberPosition.getIndex(), numberPosition.getIndex() + 3)
           : null;
-      for (int i = 0; i < INCH_FRACTION_CHARACTERS.length; i++) {
-        if (INCH_FRACTION_CHARACTERS [i] == fractionChar
-            || INCH_FRACTION_STRINGS [i].equals(fractionString)) {
+      for (int i = 0; i < EIGHTH_FRACTION_CHARACTERS.length; i++) {
+        if (EIGHTH_FRACTION_CHARACTERS [i] == fractionChar
+            || EIGHTH_FRACTION_STRINGS [i].equals(fractionString)) {
           // Check no decimal fraction was specified
           int lastDecimalSeparatorIndex = text.lastIndexOf(getDecimalFormatSymbols().getDecimalSeparator(),
               numberPosition.getIndex() - 1);
@@ -976,7 +976,7 @@ public enum LengthUnit {
               value += inchToCentimeter((i + 1) / 8f);
             }
             parsePosition.setIndex(numberPosition.getIndex()
-                + (INCH_FRACTION_CHARACTERS [i] == fractionChar ? 1 : 3));
+                + (EIGHTH_FRACTION_CHARACTERS [i] == fractionChar ? 1 : 3));
             skipWhiteSpaces(text, parsePosition);
             if (parsePosition.getIndex() < text.length()
                 && text.charAt(parsePosition.getIndex()) == '\"') {
