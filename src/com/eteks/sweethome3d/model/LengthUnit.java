@@ -798,15 +798,15 @@ public enum LengthUnit {
     private final boolean       footInch;
     private final MessageFormat positiveFootFormat;
     private final MessageFormat positiveFootInchFormat;
-    private final MessageFormat positiveFootInchEighthFormat;
+    private final MessageFormat positiveFootInchFractionFormat;
     private final MessageFormat negativeFootFormat;
     private final MessageFormat negativeFootInchFormat;
-    private final MessageFormat negativeFootInchEighthFormat;
+    private final MessageFormat negativeFootInchFractionFormat;
     private final String        footInchSeparator;
     private final MessageFormat positiveInchFormat;
-    private final MessageFormat positiveInchEighthFormat;
+    private final MessageFormat positiveInchFractionFormat;
     private final MessageFormat negativeInchFormat;
-    private final MessageFormat negativeInchEighthFormat;
+    private final MessageFormat negativeInchFractionFormat;
     private final NumberFormat  footNumberFormat;
     private final NumberFormat  inchNumberFormat;
 
@@ -817,16 +817,16 @@ public enum LengthUnit {
       ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
       this.positiveFootFormat = new MessageFormat(resource.getString("footFormat"));
       this.positiveFootInchFormat = new MessageFormat(resource.getString("footInchFormat"));
-      this.positiveFootInchEighthFormat = new MessageFormat(resource.getString("footInchEighthFormat"));
+      this.positiveFootInchFractionFormat = new MessageFormat(resource.getString("footInchFractionFormat"));
       this.negativeFootFormat = new MessageFormat("-" + resource.getString("footFormat"));
       this.negativeFootInchFormat = new MessageFormat("-" + resource.getString("footInchFormat"));
-      this.negativeFootInchEighthFormat = new MessageFormat("-" + resource.getString("footInchEighthFormat"));
+      this.negativeFootInchFractionFormat = new MessageFormat("-" + resource.getString("footInchFractionFormat"));
       this.footInchSeparator = resource.getString("footInchSeparator");
 
       this.positiveInchFormat = new MessageFormat(resource.getString("inchFormat"));
-      this.positiveInchEighthFormat = new MessageFormat(resource.getString("inchEighthFormat"));
+      this.positiveInchFractionFormat = new MessageFormat(resource.getString("inchFractionFormat"));
       this.negativeInchFormat = new MessageFormat("-" + resource.getString("inchFormat"));
-      this.negativeInchEighthFormat = new MessageFormat("-" + resource.getString("inchEighthFormat"));
+      this.negativeInchFractionFormat = new MessageFormat("-" + resource.getString("inchFractionFormat"));
 
       this.footNumberFormat = NumberFormat.getIntegerInstance();
       this.inchNumberFormat = NumberFormat.getNumberInstance();
@@ -850,8 +850,9 @@ public enum LengthUnit {
         float fractionPart = remainingInches - integerPart;
         int eighth = Math.round(fractionPart * 8);
         if (eighth == 0 || eighth == 8) {
+
           if (this.footInch) {
-            (number >= 0 ? this.positiveFootInchFormat : this.negativeFootInchFormat).format(
+            (number >= 0 ? this.positiveFootFormat : this.negativeFootFormat).format(
                 new Object [] {feet, Math.round(remainingInches * 8) / 8f}, result, fieldPosition);
           } else {
             (number >= 0 ? this.positiveInchFormat : this.negativeInchFormat).format(
@@ -859,10 +860,10 @@ public enum LengthUnit {
           }
         } else {
           if (this.footInch) {
-            (number >= 0 ? this.positiveFootInchEighthFormat : this.negativeFootInchEighthFormat).format(
+            (number >= 0 ? this.positiveFootInchFractionFormat : this.negativeFootInchFractionFormat).format(
                 new Object [] {feet, integerPart, INCH_FRACTION_CHARACTERS [eighth - 1]}, result, fieldPosition);
           } else {
-            (number >= 0 ? this.positiveInchEighthFormat : this.negativeInchEighthFormat).format(
+            (number >= 0 ? this.positiveInchFractionFormat : this.negativeInchFractionFormat).format(
                 new Object [] {feet * 12 + integerPart, INCH_FRACTION_CHARACTERS [eighth - 1]}, result, fieldPosition);
           }
         }
