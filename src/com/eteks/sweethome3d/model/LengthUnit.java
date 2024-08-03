@@ -795,7 +795,33 @@ public enum LengthUnit {
                                                                "3/4",
                                                                "7/8"};
 
+    private static final char [] FRACTION_DENOMINATOR_CHARS = {
+      '\u2080', '\u2081', '\u2082', '\u2083', '\u2084',
+      '\u2085', '\u2086', '\u2087', '\u2088', '\u2089'
+    };
+
+    private static final char [] FRACTION_NUMERATOR_CHARS = {
+      '\u2070', '\u00b9', '\u00b2', '\u00b3', '\u2074',
+      '\u2075', '\u2076', '\u2077', '\u2078', '\u2079'
+    };
+
+    private static final String [][] VULGAR_FRACTION_STRINGS = {
+      // x->   1         2         3         4       5       6       7     8     9
+      null,                                                                             // x/0
+      null,                                                                             // x/1
+      {null, "\u00bd"},                                                                 // x/2
+      {null, "\u2153", "\u2154"},                                                       // x/3
+      {null, "\u00bc",   null,   "\u00be"},                                             // x/4
+      {null, "\u2155", "\u2156", "\u2157", "\u2158"},                                   // x/5
+      {null, "\u2159",   null,     null,     null, "\u215a"},                           // x/6
+      {null, "\u2150",   null,     null,     null,   null,   null},                     // x/7
+      {null, "\u215b",   null,   "\u215c",   null, "\u215d", null, "\u215e"},           // x/8
+      {null, "\u2151",   null,     null,     null,   null,   null,   null, null},       // x/9
+      {null, "\u2152",   null,     null,     null,   null,   null,   null, null, null}, // x/10
+    };
+
     private final boolean       footInch;
+    private final Integer       fractionDenominator;
     private final MessageFormat positiveFootFormat;
     private final MessageFormat positiveFootInchFormat;
     private final MessageFormat positiveFootInchFractionFormat;
@@ -813,6 +839,7 @@ public enum LengthUnit {
     public InchFractionFormat(boolean footInch) {
       super("0.000\"");
       this.footInch = footInch;
+      this.fractionDenominator = null;
 
       ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
       this.positiveFootFormat = new MessageFormat(resource.getString("footFormat"));
@@ -835,6 +862,9 @@ public enum LengthUnit {
     @Override
     public StringBuffer format(double number, StringBuffer result,
                                FieldPosition fieldPosition) {
+      if (this.fractionDenominator != null) {
+        return formatVariableDenominator(number, result, fieldPosition);
+      }
       float absoluteValue = Math.abs((float)number);
       double feet = Math.floor(centimeterToFoot(absoluteValue));
       float remainingInches = centimeterToInch((float)absoluteValue - footToCentimeter((float)feet));
@@ -877,6 +907,92 @@ public enum LengthUnit {
         }
       }
       return result;
+    }
+
+    private StringBuffer formatVariableDenominator(final double number,
+                                                   final StringBuffer result,
+                                                   final FieldPosition fieldPosition) {
+      assert this.fractionDenominator != null && this.fractionDenominator > 1;
+      final int feet;
+      final int inches;
+      final int fractionNumerator;
+      final int fractionDenominator = (int)this.fractionDenominator;
+      {
+        final double decimalInches = (double)centimeterToInch(Math.abs((float)number));
+        final long totalFractions = Math.round(decimalInches * (double)fractionDenominator);
+        final long fractionPerInch = (long)fractionDenominator;
+        final long fractionPerFoot = fractionPerInch * 12l;
+        /* final int */ feet = this.footInch ? (int)(totalFractions / fractionPerFoot) : 0;
+        final long feetFractions = fractionPerFoot * (long)feet;
+        /* final int */ inches = (int)((totalFractions - feetFractions) / fractionPerInch);
+        final long inchFractions = fractionPerInch * (long)inches;
+        /* final int */ fractionNumerator = (int)(totalFractions - feetFractions - inchFractions);
+      }
+
+      fieldPosition.setEndIndex(fieldPosition.getEndIndex() + 1);
+      if (fractionNumerator == 0) {
+        if (this.footInch) {
+          if (inches == 0) {
+            (number >= 0 ? this.positiveFootFormat : this.negativeFootFormat).format(
+                new Object [] {feet}, result, fieldPosition);
+          } else {
+            (number >= 0 ? this.positiveFootInchFormat : this.negativeFootInchFormat).format(
+                new Object [] {feet, inches}, result, fieldPosition);
+          }
+        } else {
+          (number >= 0 ? this.positiveInchFormat : this.negativeInchFormat).format(
+              new Object [] {inches}, result, fieldPosition);
+        }
+      } else {
+        final int reducedNumerator;
+        final int reducedDenominator;
+        {
+          final int d = gcd(fractionNumerator, fractionDenominator);
+          reducedNumerator = fractionNumerator / d;
+          reducedDenominator = fractionDenominator / d;
+          assert reducedDenominator > 1;
+        }
+        final String fractionString;
+        if (reducedDenominator <= 10
+            && VULGAR_FRACTION_STRINGS [reducedDenominator] != null
+            && VULGAR_FRACTION_STRINGS [reducedDenominator][reducedNumerator] != null) {
+          fractionString = VULGAR_FRACTION_STRINGS [reducedDenominator][reducedNumerator];
+        } else {
+          final StringBuilder chars = new StringBuilder();
+          // denominator
+          for (int n = reducedDenominator, d = reducedDenominator % 10;
+               n != 0;
+               n = n / 10, d = n % 10) {
+            chars.append(FRACTION_DENOMINATOR_CHARS [d]);
+          }
+          // numerator
+          if (reducedNumerator == 1) {
+            chars.append('\u215F'); // fraction numerator one
+          } else {
+            chars.append('\u2044'); // fraction slash
+            for (int n = reducedNumerator, d = reducedNumerator % 10;
+                 n != 0;
+                 n = n / 10, d = n % 10) {
+              chars.append(FRACTION_NUMERATOR_CHARS [d]);
+            }
+          }
+          fractionString = chars.reverse().toString();
+        }
+
+        if (this.footInch) {
+          (number >= 0 ? this.positiveFootInchFractionFormat : this.negativeFootInchFractionFormat).format(
+              new Object [] {feet, inches, fractionString}, result, fieldPosition);
+        } else {
+          (number >= 0 ? this.positiveInchFractionFormat : this.negativeInchFractionFormat).format(
+              new Object [] {inches, fractionString}, result, fieldPosition);
+        }
+      }
+
+      return result;
+    }
+
+    private static int gcd(final int a, final int b) {
+      return a == 0 ? b : gcd(b % a, a);
     }
 
     @Override
