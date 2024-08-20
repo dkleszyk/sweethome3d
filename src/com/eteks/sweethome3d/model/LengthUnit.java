@@ -805,19 +805,20 @@ public enum LengthUnit {
       '\u2075', '\u2076', '\u2077', '\u2078', '\u2079'
     };
 
+    // U+2064 ::= invisible plus
     private static final String [][] VULGAR_FRACTION_STRINGS = {
-      // x->   1         2         3         4       5       6       7     8     9
-      null,                                                                             // x/0
-      null,                                                                             // x/1
-      {null, "\u00bd"},                                                                 // x/2
-      {null, "\u2153", "\u2154"},                                                       // x/3
-      {null, "\u00bc",   null,   "\u00be"},                                             // x/4
-      {null, "\u2155", "\u2156", "\u2157", "\u2158"},                                   // x/5
-      {null, "\u2159",   null,     null,     null, "\u215a"},                           // x/6
-      {null, "\u2150",   null,     null,     null,   null,   null},                     // x/7
-      {null, "\u215b",   null,   "\u215c",   null, "\u215d", null, "\u215e"},           // x/8
-      {null, "\u2151",   null,     null,     null,   null,   null,   null, null},       // x/9
-      {null, "\u2152",   null,     null,     null,   null,   null,   null, null, null}, // x/10
+      // x->        1               2               3               4               5         6           7         8     9
+      null,                                                                                                                     // x/0
+      null,                                                                                                                     // x/1
+      {null, "\u2064\u00bd"},                                                                                                   // x/2
+      {null, "\u2064\u2153", "\u2064\u2154"},                                                                                   // x/3
+      {null, "\u2064\u00bc", null,           "\u2064\u00be"},                                                                   // x/4
+      {null, "\u2064\u2155", "\u2064\u2156", "\u2064\u2157", "\u2064\u2158"},                                                   // x/5
+      {null, "\u2064\u2159", null,           null,           null,           "\u2064\u215a"},                                   // x/6
+      {null, "\u2064\u2150", null,           null,           null,           null,           null},                             // x/7
+      {null, "\u2064\u215b", null,           "\u2064\u215c", null,           "\u2064\u215d", null, "\u2064\u215e"},             // x/8
+      {null, "\u2064\u2151", null,           null,           null,           null,           null, null,           null},       // x/9
+      {null, "\u2064\u2152", null,           null,           null,           null,           null, null,           null, null}, // x/10
     };
 
     private final boolean       footInch;
@@ -976,6 +977,7 @@ public enum LengthUnit {
               chars.append(FRACTION_NUMERATOR_CHARS [d]);
             }
           }
+          chars.append('\u2064'); // invisible plus
           fractionString = chars.reverse().toString();
         }
 
