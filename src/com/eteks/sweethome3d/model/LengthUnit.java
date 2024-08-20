@@ -833,8 +833,8 @@ public enum LengthUnit {
     private final MessageFormat positiveInchFractionFormat;
     private final MessageFormat negativeInchFormat;
     private final MessageFormat negativeInchFractionFormat;
-    private final NumberFormat  footNumberFormat;
-    private final NumberFormat  inchNumberFormat;
+    private final NumberFormat  integerNumberFormat;
+    private final NumberFormat  decimalNumberFormat;
 
     public InchFractionFormat(boolean footInch) {
       super("0.000\"");
@@ -855,8 +855,8 @@ public enum LengthUnit {
       this.negativeInchFormat = new MessageFormat("-" + resource.getString("inchFormat"));
       this.negativeInchFractionFormat = new MessageFormat("-" + resource.getString("inchFractionFormat"));
 
-      this.footNumberFormat = NumberFormat.getIntegerInstance();
-      this.inchNumberFormat = NumberFormat.getNumberInstance();
+      this.integerNumberFormat = NumberFormat.getIntegerInstance();
+      this.decimalNumberFormat = NumberFormat.getNumberInstance();
     }
 
     @Override
@@ -1006,7 +1006,7 @@ public enum LengthUnit {
           && text.charAt(numberPosition.getIndex()) == this.getDecimalFormatSymbols().getMinusSign();
       boolean footValue = false;
       if (quoteIndex != -1) {
-        Number feet = this.footNumberFormat.parse(text, numberPosition);
+        Number feet = this.integerNumberFormat.parse(text, numberPosition);
         if (feet == null) {
           parsePosition.setErrorIndex(numberPosition.getErrorIndex());
           return null;
@@ -1030,7 +1030,7 @@ public enum LengthUnit {
         } else {
           if (getDecimalFormatSymbols().getDecimalSeparator() == text.charAt(numberPosition.getIndex())) {
             ParsePosition decimalNumberPosition = new ParsePosition(parsePosition.getIndex());
-            if (this.inchNumberFormat.parse(text, decimalNumberPosition) != null
+            if (this.decimalNumberFormat.parse(text, decimalNumberPosition) != null
                 && decimalNumberPosition.getIndex() == quoteIndex) {
               // Don't allow a decimal number in front of a quote
               parsePosition.setErrorIndex(numberPosition.getErrorIndex());
@@ -1043,7 +1043,7 @@ public enum LengthUnit {
         }
       }
       // Parse inches
-      Number inches = this.inchNumberFormat.parse(text, numberPosition);
+      Number inches = this.decimalNumberFormat.parse(text, numberPosition);
       if (inches == null) {
         if (footValue) {
           parsePosition.setIndex(numberPosition.getIndex());
