@@ -1,7 +1,7 @@
 /*
  * Ground3D.java 23 janv. 2009
  *
- * Sweet Home 3D, Copyright (c) 2009 Emmanuel PUYBARET / eTeks <info@eteks.com>
+ * Sweet Home 3D, Copyright (c) 2024 Space Mushrooms <info@sweethome3d.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -317,7 +317,14 @@ public class Ground3D extends Object3DBranch {
     // Sort underground areas in the reverse order of level elevation
     Collections.sort(undergroundAreas, new Comparator<LevelAreas>() {
         public int compare(LevelAreas levelAreas1, LevelAreas levelAreas2) {
-          return -Float.compare(levelAreas1.getLevel().getElevation(), levelAreas2.getLevel().getElevation());
+          Level level1 = levelAreas1.getLevel();
+          Level level2 = levelAreas2.getLevel();
+          int elevationComparison = -Float.compare(level1.getElevation(), level2.getElevation());
+          if (elevationComparison != 0) {
+            return elevationComparison;
+          } else {
+            return level1.getElevationIndex() - level2.getElevationIndex();
+          }
         }
       });
     for (LevelAreas levelAreas : undergroundAreas) {
