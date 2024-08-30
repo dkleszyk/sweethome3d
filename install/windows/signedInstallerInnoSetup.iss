@@ -1,8 +1,8 @@
 ﻿; signedInstallerInnoSetup.iss
 ;
-; Sweet Home 3D, Copyright (c) 2007-2024 Emmanuel PUYBARET / eTeks <info@eteks.com>
+; Sweet Home 3D, Copyright (c) 2024 Space Mushrooms <info@sweethome3d.com>
 ;
-; SweetHome3D-7.4-windows.exe setup program creator
+; SweetHome3D-7.5-windows.exe setup program creator
 ; This UTF-8 BOM encoded script requires Inno Setup Unicode available at http://www.jrsoftware.org/isinfo.php
 ; and a build directory stored in current directory containing :
 ;   a SweetHome3D.exe file built with launch4j
@@ -14,28 +14,28 @@
 [Setup]
 DisableWelcomePage=no
 AppName=Sweet Home 3D
-AppVersion=7.4
-AppCopyright=Copyright (c) 2007-2024 eTeks
-AppVerName=Sweet Home 3D version 7.4
-AppPublisher=eTeks
-AppPublisherURL=http://www.eteks.com
+AppVersion=7.5
+AppCopyright=Copyright (c) 2024 Space Mushrooms
+AppVerName=Sweet Home 3D version 7.5
+AppPublisher=Space Mushrooms
+AppPublisherURL=http://www.sweethome3d.com
 AppSupportURL=http://sweethome3d.sourceforge.net
 AppUpdatesURL=http://sweethome3d.sourceforge.net
 DisableDirPage=no
 DefaultDirName={pf}\Sweet Home 3D
-DefaultGroupName=eTeks Sweet Home 3D
+DefaultGroupName=Sweet Home 3D
 LicenseFile=..\..\COPYING.TXT
 OutputDir=.
-OutputBaseFilename=SweetHome3D-7.4-windows
+OutputBaseFilename=SweetHome3D-7.5-windows
 Compression=lzma2/ultra64
 SolidCompression=yes
 ChangesAssociations=yes
 ExtraDiskSpaceRequired=104900000
-VersionInfoVersion=7.4.0.0
-VersionInfoTextVersion=7.4
+VersionInfoVersion=7.5.0.0
+VersionInfoTextVersion=7.5
 VersionInfoDescription=Sweet Home 3D Setup
-VersionInfoCopyright=Copyright (c) 2007-2024 eTeks
-VersionInfoCompany=eTeks
+VersionInfoCopyright=Copyright (c) 2024 Space Mushrooms
+VersionInfoCompany=Space Mushrooms
 ; Install in 64 bit mode if possible
 ArchitecturesInstallIn64BitMode=x64
 ; Signing
@@ -203,37 +203,37 @@ UnpackingMessage=Unpacking %1...
 french.UnpackingMessage=Décompression du fichier %1...
 
 [Registry]
-Root: HKCR; Subkey: ".sh3d"; ValueType: string; ValueName: ""; ValueData: "eTeks Sweet Home 3D"; Flags: uninsdeletevalue
-Root: HKCR; Subkey: ".sh3x"; ValueType: string; ValueName: ""; ValueData: "eTeks Sweet Home 3D"; Flags: uninsdeletevalue
-Root: HKCR; Subkey: "eTeks Sweet Home 3D"; ValueType: string; ValueName: ""; ValueData: "Sweet Home 3D"; Flags: uninsdeletekey
-Root: HKCR; Subkey: "eTeks Sweet Home 3D\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\SweetHome3D.exe,0"; Flags: uninsdeletevalue
-Root: HKCR; Subkey: "eTeks Sweet Home 3D\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\SweetHome3D.exe"" -open ""%1"""; Flags: uninsdeletevalue
-Root: HKCR; Subkey: "eTeks Sweet Home 3D\Settings"; ValueType: string; ValueName: "checkUpdates"; ValueData: "{code:AreUpdatesChecked}"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: ".sh3d"; ValueType: string; ValueName: ""; ValueData: "Sweet Home 3D"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: ".sh3x"; ValueType: string; ValueName: ""; ValueData: "Sweet Home 3D"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "Sweet Home 3D"; ValueType: string; ValueName: ""; ValueData: "Sweet Home 3D"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "Sweet Home 3D\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\SweetHome3D.exe,0"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "Sweet Home 3D\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\SweetHome3D.exe"" -open ""%1"""; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "Sweet Home 3D\Settings"; ValueType: string; ValueName: "checkUpdates"; ValueData: "{code:AreUpdatesChecked}"; Flags: uninsdeletevalue
 
-Root: HKCR; Subkey: ".sh3l"; ValueType: string; ValueName: ""; ValueData: "eTeks Sweet Home 3D Language Library"; Flags: uninsdeletevalue
-Root: HKCR; Subkey: "eTeks Sweet Home 3D Language Library"; ValueType: string; ValueName: ""; ValueData: "Sweet Home 3D"; Flags: uninsdeletekey
-Root: HKCR; Subkey: "eTeks Sweet Home 3D Language Library\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\SweetHome3D.exe,0"; Flags: uninsdeletevalue
-Root: HKCR; Subkey: "eTeks Sweet Home 3D Language Library\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\SweetHome3D.exe"" -open ""%1"""; Flags: uninsdeletevalue
+Root: HKCR; Subkey: ".sh3l"; ValueType: string; ValueName: ""; ValueData: "Sweet Home 3D Language Library"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "Sweet Home 3D Language Library"; ValueType: string; ValueName: ""; ValueData: "Sweet Home 3D"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "Sweet Home 3D Language Library\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\SweetHome3D.exe,0"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "Sweet Home 3D Language Library\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\SweetHome3D.exe"" -open ""%1"""; Flags: uninsdeletevalue
 
-Root: HKCR; Subkey: ".sh3f"; ValueType: string; ValueName: ""; ValueData: "eTeks Sweet Home 3D Furniture Library"; Flags: uninsdeletevalue
-Root: HKCR; Subkey: "eTeks Sweet Home 3D Furniture Library"; ValueType: string; ValueName: ""; ValueData: "Sweet Home 3D"; Flags: uninsdeletekey
-Root: HKCR; Subkey: "eTeks Sweet Home 3D Furniture Library\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\SweetHome3D.exe,0"; Flags: uninsdeletevalue
-Root: HKCR; Subkey: "eTeks Sweet Home 3D Furniture Library\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\SweetHome3D.exe"" -open ""%1"""; Flags: uninsdeletevalue
+Root: HKCR; Subkey: ".sh3f"; ValueType: string; ValueName: ""; ValueData: "Sweet Home 3D Furniture Library"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "Sweet Home 3D Furniture Library"; ValueType: string; ValueName: ""; ValueData: "Sweet Home 3D"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "Sweet Home 3D Furniture Library\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\SweetHome3D.exe,0"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "Sweet Home 3D Furniture Library\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\SweetHome3D.exe"" -open ""%1"""; Flags: uninsdeletevalue
 
-Root: HKCR; Subkey: ".sh3t"; ValueType: string; ValueName: ""; ValueData: "eTeks Sweet Home 3D Textures Library"; Flags: uninsdeletevalue
-Root: HKCR; Subkey: "eTeks Sweet Home 3D Furniture Library"; ValueType: string; ValueName: ""; ValueData: "Sweet Home 3D"; Flags: uninsdeletekey
-Root: HKCR; Subkey: "eTeks Sweet Home 3D Furniture Library\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\SweetHome3D.exe,0"; Flags: uninsdeletevalue
-Root: HKCR; Subkey: "eTeks Sweet Home 3D Furniture Library\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\SweetHome3D.exe"" -open ""%1"""; Flags: uninsdeletevalue
+Root: HKCR; Subkey: ".sh3t"; ValueType: string; ValueName: ""; ValueData: "Sweet Home 3D Textures Library"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "Sweet Home 3D Furniture Library"; ValueType: string; ValueName: ""; ValueData: "Sweet Home 3D"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "Sweet Home 3D Furniture Library\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\SweetHome3D.exe,0"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "Sweet Home 3D Furniture Library\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\SweetHome3D.exe"" -open ""%1"""; Flags: uninsdeletevalue
 
-Root: HKCR; Subkey: ".sh3p"; ValueType: string; ValueName: ""; ValueData: "eTeks Sweet Home 3D Plugin"; Flags: uninsdeletevalue
-Root: HKCR; Subkey: "eTeks Sweet Home 3D Plugin"; ValueType: string; ValueName: ""; ValueData: "Sweet Home 3D"; Flags: uninsdeletekey
-Root: HKCR; Subkey: "eTeks Sweet Home 3D Plugin\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\SweetHome3D.exe,0"; Flags: uninsdeletevalue
-Root: HKCR; Subkey: "eTeks Sweet Home 3D Plugin\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\SweetHome3D.exe"" -open ""%1"""; Flags: uninsdeletevalue
+Root: HKCR; Subkey: ".sh3p"; ValueType: string; ValueName: ""; ValueData: "Sweet Home 3D Plugin"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "Sweet Home 3D Plugin"; ValueType: string; ValueName: ""; ValueData: "Sweet Home 3D"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "Sweet Home 3D Plugin\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\SweetHome3D.exe,0"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "Sweet Home 3D Plugin\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\SweetHome3D.exe"" -open ""%1"""; Flags: uninsdeletevalue
 
 [Code]
 var architecture64Bit : boolean;
 var uninstallExistingVersionCheckBox : TCheckBox;
-  
+
 function IsJava3D152Installed : Boolean;
 var
   windowsVersion : TWindowsVersion;

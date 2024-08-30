@@ -1,7 +1,7 @@
 /*
  * HomeComponent3D.java 24 ao?t 2006
  *
- * Sweet Home 3D, Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>
+ * Sweet Home 3D, Copyright (c) 2024 Space Mushrooms <info@sweethome3d.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -3043,7 +3043,8 @@ public class HomeComponent3D extends JComponent implements View3D, Printable {
             }
             updateObjects(updatedItems);
             groundChangeListener.propertyChange(null);
-          } else if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())) {
+          } else if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())
+                     || Level.Property.ELEVATION_INDEX.name().equals(ev.getPropertyName())) {
             updateObjects(homeObjects.keySet());
             groundChangeListener.propertyChange(null);
           } else if (Level.Property.BACKGROUND_IMAGE.name().equals(ev.getPropertyName())) {

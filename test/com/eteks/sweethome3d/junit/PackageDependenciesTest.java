@@ -1,5 +1,21 @@
-/**
+/*
  * PackageDependenciesTest.java
+ *
+ * Sweet Home 3D, Copyright (c) 2024 Space Mushrooms <info@sweethome3d.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 package com.eteks.sweethome3d.junit;
 
@@ -95,8 +111,8 @@ public class PackageDependenciesTest extends TestCase {
     JavaPackage vectorGraphicsSvg = constraint.addPackage("org.freehep.graphicsio.svg");
     // Batik for SVG path parsing
     JavaPackage orgApacheBatikParser = constraint.addPackage("org.apache.batik.parser");
-    // eTeks Parser
-    JavaPackage eTeksParser = constraint.addPackage("com.eteks.parser");
+    // Jeks Parser
+    JavaPackage jeksParser = constraint.addPackage("com.eteks.parser");
     // Java JNLP
     JavaPackage jnlp = constraint.addPackage("javax.jnlp");
     // Mac OS X specific interfaces
@@ -117,7 +133,7 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DViewController.dependsUpon(swingTextHtml);
     sweetHome3DViewController.dependsUpon(xmlSax);
     sweetHome3DViewController.dependsUpon(xmlSaxHelpers);
-    
+
     sweetHome3DPlugin.dependsUpon(sweetHome3DModel);
     sweetHome3DPlugin.dependsUpon(sweetHome3DTools);
     sweetHome3DPlugin.dependsUpon(sweetHome3DViewController);
@@ -153,7 +169,7 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DSwing.dependsUpon(sweetHome3DPlugin);
     sweetHome3DSwing.dependsUpon(sweetHome3DViewController);
     sweetHome3DSwing.dependsUpon(sweetHome3DJava3D);
-    sweetHome3DSwing.dependsUpon(eTeksParser);
+    sweetHome3DSwing.dependsUpon(jeksParser);
     sweetHome3DSwing.dependsUpon(swing);
     sweetHome3DSwing.dependsUpon(swingEvent);
     sweetHome3DSwing.dependsUpon(swingText);
