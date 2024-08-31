@@ -990,87 +990,67 @@ public class WallPanel extends JPanel implements DialogView {
   }
 
   /**
+   * Helper to get mnemonics from user preferences.
+   */
+  private static int getMnemonic(final UserPreferences preferences,
+                                 final String resourceKey) {
+    final KeyStroke keyStroke = KeyStroke.getKeyStroke(preferences.getLocalizedString(WallPanel.class, resourceKey));
+    return keyStroke == null ? 0 : keyStroke.getKeyCode();
+  }
+
+  /**
    * Sets components mnemonics and label / component associations.
    */
   private void setMnemonics(UserPreferences preferences) {
     if (!OperatingSystem.isMacOSX()) {
-      this.xStartLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "xLabel.mnemonic")).getKeyCode());
+      this.xStartLabel.setDisplayedMnemonic(getMnemonic(preferences, "xLabel.mnemonic"));
       this.xStartLabel.setLabelFor(this.xStartSpinner);
-      this.yStartLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "yLabel.mnemonic")).getKeyCode());
+      this.yStartLabel.setDisplayedMnemonic(getMnemonic(preferences, "yLabel.mnemonic"));
       this.yStartLabel.setLabelFor(this.yStartSpinner);
-      this.xEndLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "xLabel.mnemonic")).getKeyCode());
+      this.xEndLabel.setDisplayedMnemonic(getMnemonic(preferences, "xLabel.mnemonic"));
       this.xEndLabel.setLabelFor(this.xEndSpinner);
-      this.yEndLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "yLabel.mnemonic")).getKeyCode());
+      this.yEndLabel.setDisplayedMnemonic(getMnemonic(preferences, "yLabel.mnemonic"));
       this.yEndLabel.setLabelFor(this.yEndSpinner);
-      this.distanceToEndPointLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "distanceToEndPointLabel.mnemonic")).getKeyCode());
+      this.distanceToEndPointLabel.setDisplayedMnemonic(getMnemonic(preferences, "distanceToEndPointLabel.mnemonic"));
       this.distanceToEndPointLabel.setLabelFor(this.distanceToEndPointSpinner);
 
-      this.leftSideColorRadioButton.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "leftSideColorRadioButton.mnemonic")).getKeyCode());
-      this.leftSideTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "leftSideTextureRadioButton.mnemonic")).getKeyCode());
-      this.leftSideMattRadioButton.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "leftSideMattRadioButton.mnemonic")).getKeyCode());
-      this.leftSideShinyRadioButton.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "leftSideShinyRadioButton.mnemonic")).getKeyCode());
-      this.rightSideColorRadioButton.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "rightSideColorRadioButton.mnemonic")).getKeyCode());
-      this.rightSideTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "rightSideTextureRadioButton.mnemonic")).getKeyCode());
-      this.rightSideMattRadioButton.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "rightSideMattRadioButton.mnemonic")).getKeyCode());
-      this.rightSideShinyRadioButton.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "rightSideShinyRadioButton.mnemonic")).getKeyCode());
+      this.leftSideColorRadioButton.setMnemonic(getMnemonic(preferences, "leftSideColorRadioButton.mnemonic"));
+      this.leftSideTextureRadioButton.setMnemonic(getMnemonic(preferences, "leftSideTextureRadioButton.mnemonic"));
+      this.leftSideMattRadioButton.setMnemonic(getMnemonic(preferences, "leftSideMattRadioButton.mnemonic"));
+      this.leftSideShinyRadioButton.setMnemonic(getMnemonic(preferences, "leftSideShinyRadioButton.mnemonic"));
+      this.rightSideColorRadioButton.setMnemonic(getMnemonic(preferences, "rightSideColorRadioButton.mnemonic"));
+      this.rightSideTextureRadioButton.setMnemonic(getMnemonic(preferences, "rightSideTextureRadioButton.mnemonic"));
+      this.rightSideMattRadioButton.setMnemonic(getMnemonic(preferences, "rightSideMattRadioButton.mnemonic"));
+      this.rightSideShinyRadioButton.setMnemonic(getMnemonic(preferences, "rightSideShinyRadioButton.mnemonic"));
 
-      this.patternLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          WallPanel.class, "patternLabel.mnemonic")).getKeyCode());
+      this.patternLabel.setDisplayedMnemonic(getMnemonic(preferences, "patternLabel.mnemonic"));
       this.patternLabel.setLabelFor(this.patternComboBox);
-      this.topDefaultColorRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-              WallPanel.class,"topDefaultColorRadioButton.mnemonic")).getKeyCode());
-      this.topColorRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-              WallPanel.class,"topColorRadioButton.mnemonic")).getKeyCode());
+      this.topDefaultColorRadioButton.setMnemonic(getMnemonic(preferences, "topDefaultColorRadioButton.mnemonic"));
+      this.topColorRadioButton.setMnemonic(getMnemonic(preferences, "topColorRadioButton.mnemonic"));
 
-      this.rectangularWallRadioButton.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "rectangularWallRadioButton.mnemonic")).getKeyCode());
-      this.rectangularWallHeightLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "rectangularWallHeightLabel.mnemonic")).getKeyCode());
+      this.rectangularWallRadioButton.setMnemonic(getMnemonic(preferences, "rectangularWallRadioButton.mnemonic"));
+      this.rectangularWallHeightLabel.setDisplayedMnemonic(getMnemonic(preferences, "rectangularWallHeightLabel.mnemonic"));
       this.rectangularWallHeightLabel.setLabelFor(this.rectangularWallHeightSpinner);
-      this.slopingWallRadioButton.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "slopingWallRadioButton.mnemonic")).getKeyCode());
-      this.slopingWallHeightAtStartLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "slopingWallHeightAtStartLabel.mnemonic")).getKeyCode());
+      this.slopingWallRadioButton.setMnemonic(getMnemonic(preferences, "slopingWallRadioButton.mnemonic"));
+      this.slopingWallHeightAtStartLabel.setDisplayedMnemonic(getMnemonic(preferences, "slopingWallHeightAtStartLabel.mnemonic"));
       this.slopingWallHeightAtStartLabel.setLabelFor(this.slopingWallHeightAtStartSpinner);
-      this.slopingWallHeightAtEndLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "slopingWallHeightAtEndLabel.mnemonic")).getKeyCode());
+      this.slopingWallHeightAtEndLabel.setDisplayedMnemonic(getMnemonic(preferences, "slopingWallHeightAtEndLabel.mnemonic"));
       this.slopingWallHeightAtEndLabel.setLabelFor(this.slopingWallHeightAtEndSpinner);
 
-      this.rectangularElevationRadioButton.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "rectangularElevationRadioButton.mnemonic")).getKeyCode());
-      this.rectangularElevationLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "rectangularElevationLabel.mnemonic")).getKeyCode());
+      this.rectangularElevationRadioButton.setMnemonic(getMnemonic(preferences, "rectangularElevationRadioButton.mnemonic"));
+      this.rectangularElevationLabel.setDisplayedMnemonic(getMnemonic(preferences, "rectangularElevationLabel.mnemonic"));
       this.rectangularElevationLabel.setLabelFor(this.rectangularElevationSpinner);
-      this.slopingElevationRadioButton.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "slopingElevationRadioButton.mnemonic")).getKeyCode());
-      this.slopingElevationAtStartLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "slopingElevationAtStartLabel.mnemonic")).getKeyCode());
+      this.slopingElevationRadioButton.setMnemonic(getMnemonic(preferences, "slopingElevationRadioButton.mnemonic"));
+      this.slopingElevationAtStartLabel.setDisplayedMnemonic(getMnemonic(preferences, "slopingElevationAtStartLabel.mnemonic"));
       this.slopingElevationAtStartLabel.setLabelFor(this.slopingElevationAtStartSpinner);
-      this.slopingElevationAtEndLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "slopingElevationAtEndLabel.mnemonic")).getKeyCode());
+      this.slopingElevationAtEndLabel.setDisplayedMnemonic(getMnemonic(preferences, "slopingElevationAtEndLabel.mnemonic"));
       this.slopingElevationAtEndLabel.setLabelFor(this.slopingElevationAtEndSpinner);
 
-      this.floatingWallCheckBox.setMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "floatingWallCheckBox.mnemonic")).getKeyCode());
+      this.floatingWallCheckBox.setMnemonic(getMnemonic(preferences, "floatingWallCheckBox.mnemonic"));
 
-      this.thicknessLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "thicknessLabel.mnemonic")).getKeyCode());
+      this.thicknessLabel.setDisplayedMnemonic(getMnemonic(preferences, "thicknessLabel.mnemonic"));
       this.thicknessLabel.setLabelFor(this.thicknessSpinner);
-      this.arcExtentLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
-          preferences.getLocalizedString(WallPanel.class, "arcExtentLabel.mnemonic")).getKeyCode());
+      this.arcExtentLabel.setDisplayedMnemonic(getMnemonic(preferences, "arcExtentLabel.mnemonic"));
       this.arcExtentLabel.setLabelFor(this.arcExtentSpinner);
     }
   }
