@@ -883,7 +883,7 @@ public enum LengthUnit {
         if (eighth == 0 || eighth == 8) {
 
           if (this.footInch) {
-            (number >= 0 ? this.positiveFootFormat : this.negativeFootFormat).format(
+            (number >= 0 ? this.positiveFootInchFormat : this.negativeFootInchFormat).format(
                 new Object [] {feet, Math.round(remainingInches * 8) / 8f}, result, fieldPosition);
           } else {
             (number >= 0 ? this.positiveInchFormat : this.negativeInchFormat).format(
