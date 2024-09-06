@@ -1356,7 +1356,7 @@ public enum LengthUnit {
           // subparseFraction doesn't handle negative numbers,
           // so need to skip past negative prefix if present
           parsePosition.setIndex(savedIndex
-                                 + isNegative ? getNegativePrefix().length() : 0);
+                                 + (isNegative ? getNegativePrefix().length() : 0));
           final Double f = subparseFraction(text, parsePosition, zero);
           if (f == null) {
             // wasn't parseable as fraction.
@@ -1797,7 +1797,7 @@ public enum LengthUnit {
       final StringBuilder buf = new StringBuilder(separatorLength + 1);
       buf.append(fractionSeparator);
       assert buf.length() == separatorLength;
-      final String [][] result = new String [][VULGAR_FRACTION_STRINGS.length];
+      final String [][] result = new String [VULGAR_FRACTION_STRINGS.length][];
       for (int d = 0; d < VULGAR_FRACTION_STRINGS.length; d++) {
         if (VULGAR_FRACTION_STRINGS [d] != null) {
           result [d] = new String [VULGAR_FRACTION_STRINGS [d].length];
