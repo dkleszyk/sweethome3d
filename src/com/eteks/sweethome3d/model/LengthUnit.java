@@ -1669,6 +1669,8 @@ public enum LengthUnit {
       final int index = parsePosition.getIndex();
       final char c = text.charAt(index);
       if (linearSearch(FOOT_MARKER_CHARS, c) > -1) {
+        // treat duplicated foot marker as inch marker
+        // i.e. '' => "
         return text.length() - 1 > index
                && text.charAt(index + 1) == c
                && setIndex(parsePosition, index + 2);
