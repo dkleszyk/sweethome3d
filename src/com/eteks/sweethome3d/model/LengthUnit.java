@@ -867,6 +867,38 @@ public enum LengthUnit {
       }
     }
 
+    /* status flags for subparseNumber */
+    private static final int STATUS_NEGATIVE = 0;
+    private static final int STATUS_DECIMAL = 1;
+    private static final int STATUS_FRACTION = 2;
+    private static final int STATUS_INCH = 3;
+    private static final int STATUS_FOOT = 4;
+    private static final int STATUS_LENGTH = 5;
+
+    /* values for subparseFraction */
+    private static final int MAX_SIGNIFICANT_DIGITS = 19;
+    private static final long [] DIGIT_MULTIPLIERS = {
+      1000000000000000000L,
+      100000000000000000L,
+      10000000000000000L,
+      1000000000000000L,
+      100000000000000L,
+      10000000000000L,
+      1000000000000L,
+      100000000000L,
+      10000000000L,
+      1000000000L,
+      100000000L,
+      10000000L,
+      1000000L,
+      100000L,
+      10000L,
+      1000L,
+      100L,
+      10L,
+      1L
+    };
+
     private final boolean       footInch;
     private final Integer       fractionDenominator;
     private final MessageFormat positiveFootFormat;
@@ -1157,13 +1189,6 @@ public enum LengthUnit {
       return value;
     }
 
-    private static final int STATUS_NEGATIVE = 0;
-    private static final int STATUS_DECIMAL = 1;
-    private static final int STATUS_FRACTION = 2;
-    private static final int STATUS_INCH = 3;
-    private static final int STATUS_FOOT = 4;
-    private static final int STATUS_LENGTH = 5;
-
     /**
      * Parses a double from a foot-inch string where the numeric portions
      * may have a fraction part with a variable denominator.
@@ -1346,30 +1371,6 @@ public enum LengthUnit {
         return initialNumber;
       }
     }
-
-    private static final int MAX_SIGNIFICANT_DIGITS = 19;
-
-    private static final long [] DIGIT_MULTIPLIERS = {
-      1000000000000000000L,
-      100000000000000000L,
-      10000000000000000L,
-      1000000000000000L,
-      100000000000000L,
-      10000000000000L,
-      1000000000000L,
-      100000000000L,
-      10000000000L,
-      1000000000L,
-      100000000L,
-      10000000L,
-      1000000L,
-      100000L,
-      10000L,
-      1000L,
-      100L,
-      10L,
-      1L
-    };
 
     /**
      * Parses a variable-denominator fraction into a double.
