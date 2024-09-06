@@ -807,19 +807,86 @@ public enum LengthUnit {
     };
 
     private static final char [] FRACTION_SEPARATOR_CHARS = {
-      '+', '-', '\u2064'
+      '+', '-', '~',
+      '\u02d7', // modifier letter minus sign
+      '\u06d4', // arabic full stop
+      '\u200b', // zero width space (confusingly, not whitespace)
+      '\u200c', // zero width non-joiner
+      '\u200d', // zero width joiner
+      '\u2010', // hyphen
+      '\u2011', // non-breaking hyphen
+      '\u2012', // figure dash
+      '\u2013', // en dash
+      '\u2043', // hyphen bullet
+      '\u2060', // word joiner
+      '\u2064', // invisible plus
+      '\u2212', // minus sign
+      '\u2796', // heavy minus sign
+      '\u2cba', // coptic capital letter dialect-p ni
+      '\ufe58'  // small em dash
     };
 
     private static final char [] FRACTION_SLASH_CHARS = {
-      '/', '\u2044'
+      '/', '\\',
+      '\u2044', // fraction slash
+      '\u2215', // division slash
+      '\u29F8'  // big solidus
     };
 
     private static final char [] INCH_MARKER_CHARS = {
-      '"'
+      '"',
+      '\u02ba', // modifier letter double prime
+      '\u02dd', // double acute accent
+      '\u02ee', // modifier letter double apostrophe
+      '\u02f6', // modifier letter middle double acute accent
+      '\u05f2', // hebrew ligature yiddish double yod
+      '\u05f4', // hebrew punctuation gershayim
+      '\u1cd3', // vedic sign nihshvasa
+      '\u201c', // left double quotation mark
+      '\u201d', // right double quotation mark
+      '\u201f', // double high-reversed-9 quotation mark
+      '\u2033', // double prime
+      '\u2036', // reversed double prime
+      '\u3003', // ditto mark
+      '\uff02', // fullwidth quotation mark
     };
 
     private static final char [] FOOT_MARKER_CHARS = {
-      '\''
+      '\'',
+      '\u0060', // grave accent
+      '\u00b4', // acute accent
+      '\u02b9', // modifier letter prime
+      '\u02bb', // modifier letter turned comma
+      '\u02bc', // modifier letter apostrophe
+      '\u02bd', // modifier letter reversed comma
+      '\u02be', // modifier letter right half ring
+      '\u02c8', // modifier letter vertical line
+      '\u02ca', // modifier letter acute accent
+      '\u02cb', // modifier letter grave accent
+      '\u02f4', // modifier letter middle grave accent
+      '\u0374', // greek numeral sign
+      '\u0384', // greek tonos
+      '\u055a', // armenian apostrophe
+      '\u055d', // armenian comma
+      '\u05d9', // hebrew letter yod
+      '\u05f3', // hebrew punctuation geresh
+      '\u07f4', // nko high tone apostrophe
+      '\u07f5', // nko low tone apostrophe
+      '\u144a', // canadian syllabics west-cree p
+      '\u16cc', // runic letter short-twig-sol s
+      '\u1fbd', // greek koronis
+      '\u1fbf', // greek psili
+      '\u1fef', // greek varia
+      '\u1ffd', // greek oxia
+      '\u1ffe', // greek dasia
+      '\u2018', // left single quotation mark
+      '\u2019', // right single quotation mark
+      '\u201b', // single high-reversed-9 quotation mark
+      '\u2032', // prime
+      '\u2035', // reversed prime
+      '\ua78c', // latin small letter saltillo
+      '\uff07', // fullwidth apostrophe
+      '\uff40'  // fullwidth grave accent
     };
 
     private static final String [][] VULGAR_FRACTION_STRINGS = {
