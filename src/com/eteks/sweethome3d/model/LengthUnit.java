@@ -822,20 +822,19 @@ public enum LengthUnit {
       '\''
     };
 
-    // U+2064 ::= invisible plus
     private static final String [][] VULGAR_FRACTION_STRINGS = {
-      // x->        1               2               3               4               5         6           7         8     9
-      null,                                                                                                                     // x/0
-      null,                                                                                                                     // x/1
-      {null, "\u2064\u00bd"},                                                                                                   // x/2
-      {null, "\u2064\u2153", "\u2064\u2154"},                                                                                   // x/3
-      {null, "\u2064\u00bc", null,           "\u2064\u00be"},                                                                   // x/4
-      {null, "\u2064\u2155", "\u2064\u2156", "\u2064\u2157", "\u2064\u2158"},                                                   // x/5
-      {null, "\u2064\u2159", null,           null,           null,           "\u2064\u215a"},                                   // x/6
-      {null, "\u2064\u2150", null,           null,           null,           null,           null},                             // x/7
-      {null, "\u2064\u215b", null,           "\u2064\u215c", null,           "\u2064\u215d", null, "\u2064\u215e"},             // x/8
-      {null, "\u2064\u2151", null,           null,           null,           null,           null, null,           null},       // x/9
-      {null, "\u2064\u2152", null,           null,           null,           null,           null, null,           null, null}, // x/10
+      // x->     1         2         3         4         5      6        7      8     9
+      null,                                                                                 // x/0
+      null,                                                                                 // x/1
+      {null, "\u00bd"},                                                                     // x/2
+      {null, "\u2153", "\u2154"},                                                           // x/3
+      {null, "\u00bc", null,     "\u00be"},                                                 // x/4
+      {null, "\u2155", "\u2156", "\u2157", "\u2158"},                                       // x/5
+      {null, "\u2159", null,     null,     null,     "\u215a"},                             // x/6
+      {null, "\u2150", null,     null,     null,     null,     null},                       // x/7
+      {null, "\u215b", null,     "\u215c", null,     "\u215d", null, "\u215e"},             // x/8
+      {null, "\u2151", null,     null,     null,     null,     null, null,     null},       // x/9
+      {null, "\u2152", null,     null,     null,     null,     null, null,     null, null}, // x/10
     };
 
     private static final char [] VULGAR_FRACTION_CHARS;
@@ -858,7 +857,8 @@ public enum LengthUnit {
         if (VULGAR_FRACTION_STRINGS [d] != null) {
           for (int n = 0; n < VULGAR_FRACTION_STRINGS [d].length; n++) {
             if (VULGAR_FRACTION_STRINGS [d][n] != null) {
-              VULGAR_FRACTION_CHARS [i] = VULGAR_FRACTION_STRINGS [d][n].charAt(1);
+              assert VULGAR_FRACTION_STRINGS [d][n].length() == 1;
+              VULGAR_FRACTION_CHARS [i] = VULGAR_FRACTION_STRINGS [d][n].charAt(0);
               VULGAR_FRACTION_VALUES [i] = ((double)n) / ((double)d);
               i += 1;
             }
@@ -908,12 +908,15 @@ public enum LengthUnit {
     private final MessageFormat negativeFootInchFormat;
     private final MessageFormat negativeFootInchFractionFormat;
     private final String        footInchSeparator;
+    private final String        fractionSeparator;
     private final MessageFormat positiveInchFormat;
     private final MessageFormat positiveInchFractionFormat;
     private final MessageFormat negativeInchFormat;
     private final MessageFormat negativeInchFractionFormat;
     private final NumberFormat  integerNumberFormat;
     private final NumberFormat  decimalNumberFormat;
+
+    private transient String [][] vulgarFractionStrings;
 
     public InchFractionFormat(boolean footInch) {
       super("0.000\"");
@@ -928,6 +931,7 @@ public enum LengthUnit {
       this.negativeFootInchFormat = new MessageFormat("-" + resource.getString("footInchFormat"));
       this.negativeFootInchFractionFormat = new MessageFormat("-" + resource.getString("footInchFractionFormat"));
       this.footInchSeparator = resource.getString("footInchSeparator");
+      this.fractionSeparator = resource.getString("fractionSeparator");
 
       this.positiveInchFormat = new MessageFormat(resource.getString("inchFormat"));
       this.positiveInchFractionFormat = new MessageFormat(resource.getString("inchFractionFormat"));
@@ -1034,11 +1038,12 @@ public enum LengthUnit {
           reducedDenominator = fractionDenominator / d;
           assert reducedDenominator > 1;
         }
+        final String [][] vulgarFractions = getVulgarFractionStrings();
         final String fractionString;
         if (reducedDenominator <= 10
-            && VULGAR_FRACTION_STRINGS [reducedDenominator] != null
-            && VULGAR_FRACTION_STRINGS [reducedDenominator][reducedNumerator] != null) {
-          fractionString = VULGAR_FRACTION_STRINGS [reducedDenominator][reducedNumerator];
+            && vulgarFractions [reducedDenominator] != null
+            && vulgarFractions [reducedDenominator][reducedNumerator] != null) {
+          fractionString = vulgarFractions [reducedDenominator][reducedNumerator];
         } else {
           final StringBuilder chars = new StringBuilder();
           // denominator
@@ -1058,7 +1063,9 @@ public enum LengthUnit {
               chars.append(FRACTION_NUMERATOR_CHARS [d]);
             }
           }
-          chars.append('\u2064'); // invisible plus
+          for (int i = this.fractionSeparator.length() - 1; i >= 0; i--) {
+            chars.append(this.fractionSeparator.charAt(i));
+          }
           fractionString = chars.reverse().toString();
         }
 
@@ -1072,6 +1079,17 @@ public enum LengthUnit {
       }
 
       return result;
+    }
+
+    /**
+     * Returns a two-dimensional array containing the pre-formatted strings for vulgar fractions,
+     * indexed by denominator then by numerator.
+     */
+    private String [][] getVulgarFractionStrings() {
+      if (this.vulgarFractionStrings == null) {
+        this.vulgarFractionStrings = getVulgarFractionStringsWithSeparator(this.fractionSeparator);
+      }
+      return this.vulgarFractionStrings;
     }
 
     @Override
@@ -1701,6 +1719,32 @@ public enum LengthUnit {
     private static boolean setIndex(final ParsePosition parsePosition, final int index) {
       parsePosition.setIndex(index);
       return true;
+    }
+
+    /**
+     * Returns a two-dimensional string array that contains each item in {@code VULGAR_FRACTION_STRINGS}
+     * with the specified digit separator prepended to the item.
+     */
+    private static String [][] getVulgarFractionStringsWithSeparator(final String fractionSeparator) {
+      final int separatorLength = fractionSeparator.length();
+      final StringBuilder buf = new StringBuilder(separatorLength + 1);
+      buf.append(fractionSeparator);
+      assert buf.length() == separatorLength;
+      final String [][] result = new String [][VULGAR_FRACTION_STRINGS.length];
+      for (int d = 0; d < VULGAR_FRACTION_STRINGS.length; d++) {
+        if (VULGAR_FRACTION_STRINGS [d] != null) {
+          result [d] = new String [VULGAR_FRACTION_STRINGS [d].length];
+          for (int n = 0; n < VULGAR_FRACTION_STRINGS[d].length; n++) {
+            if (VULGAR_FRACTION_STRINGS [d][n] != null) {
+              assert VULGAR_FRACTION_STRINGS [d][n].length() == 1;
+              buf.append(VULGAR_FRACTION_STRINGS [d][n]);
+              result [d][n] = buf.toString();
+              buf.setLength(separatorLength);
+            }
+          }
+        }
+      }
+      return result;
     }
 
     /**
