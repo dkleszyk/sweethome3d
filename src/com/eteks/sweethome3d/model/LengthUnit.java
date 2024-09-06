@@ -1417,11 +1417,14 @@ public enum LengthUnit {
             case 0: // skip leading zeroes
               zeroes: while (true) {
                 if (++textIndex >= text.length()) {
-                  break numerator;
+                  return null;
                 }
                 c = text.charAt(textIndex);
                 d = digitValue(c, zero);
                 if (d < 0) {
+                  break digits;
+                }
+                if (d > 0) {
                   break zeroes;
                 }
               } // :zeroes:
@@ -1474,11 +1477,14 @@ public enum LengthUnit {
             case 0: // skip leading zeroes
               zeroes: while (true) {
                 if (++textIndex >= text.length()) {
-                  break denominator;
+                  break digits;
                 }
                 c = text.charAt(textIndex);
                 d = digitValue(c, zero);
                 if (d < 0) {
+                  break digits;
+                }
+                if (d > 0) {
                   break zeroes;
                 }
               } // :zeroes:
