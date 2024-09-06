@@ -956,6 +956,9 @@ public enum LengthUnit {
       return result;
     }
 
+    /**
+     * Formats a double into a fractional-inch string with a variable denominator
+     */
     private StringBuffer formatVariableDenominator(final double number,
                                                    final StringBuffer result,
                                                    final FieldPosition fieldPosition) {
@@ -1161,6 +1164,10 @@ public enum LengthUnit {
     private static final int STATUS_FOOT = 4;
     private static final int STATUS_LENGTH = 5;
 
+    /**
+     * Parses a double from a foot-inch string where the numeric portions
+     * may have a fraction part with a variable denominator.
+     */
     private Number parseVariableDenominator(final String text,
                                             final ParsePosition parsePosition) {
       boolean [] status = new boolean [STATUS_LENGTH];
@@ -1202,6 +1209,11 @@ public enum LengthUnit {
                       : footToCentimeter(firstNumber.floatValue()) + inchToCentimeter(secondNumber.floatValue()));
     }
 
+    /**
+     * Parses a double from a string, checking for a unit specifier afterwards.
+     * The numeric portion may have a decimal part or a fraction part with a
+     * variable denominator.
+     */
     private Number subparseNumber(final String text,
                                   final ParsePosition parsePosition,
                                   final boolean [] status) {
@@ -1225,6 +1237,8 @@ public enum LengthUnit {
                        ? text.charAt(parsePosition.getIndex())
                        : '\u0000';
         if (linearSearch(FRACTION_SLASH_CHARS, c) > -1) {
+          // if integer followed by fraction slash,
+          // check to see if parseable as fraction
           final int nEndIndex = parsePosition.getIndex();
           isNegative = n instanceof Double
                        ? Double.doubleToLongBits((Double)n) < 0L
@@ -1245,6 +1259,8 @@ public enum LengthUnit {
           skipFraction = true;
         } else {
           if (c == getDecimalFormatSymbols().getDecimalSeparator()) {
+            // if integer followed by decimal separator,
+            // parse as decimal
             parsePosition.setIndex(savedIndex);
             initialNumber = this.decimalNumberFormat.parse(text, parsePosition);
             hasDecimal = skipFraction = true;
@@ -1264,7 +1280,7 @@ public enum LengthUnit {
       final Double fractionPart;
       final boolean hasInch;
       final boolean hasFoot;
-      switch (0) {
+      textEnd: switch (0) {
         default:
           if (text.length() > parsePosition.getIndex()) {
             if (skipFraction) {
@@ -1280,7 +1296,7 @@ public enum LengthUnit {
                   parsePosition.setIndex(savedIndex);
                   fractionPart = null;
                   hasInch = hasFoot = false;
-                  break;
+                  break textEnd;
                 }
               }
               fractionPart = subparseFraction(text, parsePosition, zero);
@@ -1290,7 +1306,7 @@ public enum LengthUnit {
                 // do not reset parsePosition here.
                 // successfully got a fraction, but then the string ended
                 hasInch = hasFoot = false;
-                break;
+                break textEnd;
               }
             }
 
@@ -1309,7 +1325,7 @@ public enum LengthUnit {
             hasInch = false;
             hasFoot = false;
           }
-      }
+      } // :textEnd:
 
       // set status flags and return
       status [STATUS_NEGATIVE] = isNegative;
@@ -1350,6 +1366,9 @@ public enum LengthUnit {
       1L
     };
 
+    /**
+     * Parses a variable-denominator fraction into a double.
+     */
     private static Double subparseFraction(final String text,
                                            final ParsePosition parsePosition,
                                            final char zero) {
@@ -1391,7 +1410,7 @@ public enum LengthUnit {
                 if (d < 0) {
                   break zeroes;
                 }
-              }
+              } // :zeroes:
               // intended fall thru
             default:
               significantDigits: while (true) {
@@ -1407,7 +1426,7 @@ public enum LengthUnit {
                 if (numeratorDigits >= MAX_SIGNIFICANT_DIGITS) {
                   break significantDigits;
                 }
-              }
+              } // :significantDigits:
               while (true) {
                 numeratorDigits += 1;
                 if (++textIndex >= text.length()) {
@@ -1419,7 +1438,7 @@ public enum LengthUnit {
                   break digits;
                 }
               }
-          }
+          } // :digits:
 
           // check for fraction slash
           if (linearSearch(FRACTION_SLASH_CHARS, c) < 0
@@ -1427,7 +1446,7 @@ public enum LengthUnit {
             return null;
           }
           c = text.charAt(textIndex);
-      }
+      } // :numerator:
 
       // parse denominator
       int denominatorDigits = 0;
@@ -1448,7 +1467,7 @@ public enum LengthUnit {
                 if (d < 0) {
                   break zeroes;
                 }
-              }
+              } // :zeroes:
               // intended fall thru
             default:
               significantDigits: while (true) {
@@ -1465,7 +1484,7 @@ public enum LengthUnit {
                 if (denominatorDigits >= MAX_SIGNIFICANT_DIGITS) {
                   break significantDigits;
                 }
-              }
+              } // :significantDigits:
               while (true) {
                 denominatorDigits += 1;
                 if (++textIndex >= text.length()) {
@@ -1477,8 +1496,8 @@ public enum LengthUnit {
                   break digits;
                 }
               }
-          }
-      }
+          } // :digits:
+      } // :denominator:
 
       // got a valid numerator and denominator.
       // update parse position
@@ -1500,6 +1519,7 @@ public enum LengthUnit {
         final int digitEndIndex = digitIndex + numeratorSignificantDigits;
         acc: switch (0) {
           default:
+            // label can't be on loop because we need to skip past "break acc"
             longAcc: switch (0) {
               default:
                 for ( ; digitIndex < digitEndIndex; digitIndex++, multiplierIndex++) {
@@ -1512,14 +1532,14 @@ public enum LengthUnit {
                   longNumerator = r;
                 }
                 break acc;
-            } // end longAcc
+            } // :longAcc:
             doubleNumerator = longNumerator;
             numeratorFitsIntoLong = false;
             for ( ; digitIndex < digitEndIndex; digitIndex++, multiplierIndex++) {
               final long scaledDigit = digitBuf [digitIndex] * DIGIT_MULTIPLIERS [multiplierIndex];
               doubleNumerator += scaledDigit;
             }
-        } // end acc
+        } // :acc:
         if (numeratorDigits > MAX_SIGNIFICANT_DIGITS) {
           if (numeratorFitsIntoLong) {
             doubleNumerator = longNumerator;
@@ -1544,6 +1564,7 @@ public enum LengthUnit {
         final int digitEndIndex = digitIndex + denominatorSignificantDigits;
         acc: switch (0) {
           default:
+            // label can't be on loop because we need to skip past "break acc"
             longAcc: switch (0) {
               default:
                 for ( ; digitIndex < digitEndIndex; digitIndex++, multiplierIndex++) {
@@ -1556,14 +1577,14 @@ public enum LengthUnit {
                   longDenominator = r;
                 }
                 break acc;
-            } // end longAcc
+            } // :longAcc:
             doubleDenominator = longDenominator;
             denominatorFitsIntoLong = false;
             for ( ; digitIndex < digitEndIndex; digitIndex++, multiplierIndex++) {
               final long scaledDigit = digitBuf [digitIndex] * DIGIT_MULTIPLIERS [multiplierIndex];
               doubleDenominator += scaledDigit;
             }
-        } // end acc
+        } // :acc:
         if (denominatorDigits > MAX_SIGNIFICANT_DIGITS) {
           if (denominatorFitsIntoLong) {
             doubleDenominator = longDenominator;
@@ -1592,37 +1613,50 @@ public enum LengthUnit {
       return ((double)longNumerator) / ((double)longDenominator);
     }
 
+    /**
+     * Returns the digit value of a character, or a negative value if out-of-range.
+     */
     private static int digitValue(final char c, final char zero) {
+      // check against localized zero digit
       int d = c - zero;
       if (0 <= d && d <= 9) {
         return d;
       }
+      // check against subscript zero
       d = c - '\u2080';
       if (0 <= d && d <= 9) {
         return d;
       }
+      // check against superscript zero
       d = c - '\u2070';
       if (d == 0 || 4 <= d && d <= 9) {
         return d;
       }
+      // else
       switch (c) {
-        case '\u00b9':
+        case '\u00b9': // superscript 1
           return 1;
-        case '\u00b2':
+        case '\u00b2': // superscript 2
           return 2;
-        case '\u00b3':
+        case '\u00b3': // superscript 3
           return 3;
         default:
           return Character.digit(c, 10);
       }
     }
 
+    /**
+     * Checks for a foot unit marker, advancing the parse position if found.
+     */
     private static boolean tryConsumeFootUnitMarker(final String text,
                                                     final ParsePosition parsePosition) {
       return linearSearch(FOOT_MARKER_CHARS, text.charAt(parsePosition.getIndex())) > -1
              && incrementIndex(parsePosition);
     }
 
+    /**
+     * Checks for an inch unit marker, advancing the parse position if found.
+     */
     private static boolean tryConsumeInchUnitMarker(final String text,
                                                     final ParsePosition parsePosition) {
       final char c = text.charAt(parsePosition.getIndex());
@@ -1636,11 +1670,17 @@ public enum LengthUnit {
              && incrementIndex(parsePosition);
     }
 
+    /**
+     * Increments the parse position and returns {@code true}.
+     */
     private static boolean incrementIndex(final ParsePosition parsePosition) {
       parsePosition.setIndex(parsePosition.getIndex() + 1);
       return true;
     }
 
+    /**
+     * Searches the {@code char} array for a specified value.
+     */
     private static int linearSearch(final char [] a, final char c) {
       int result = -1;
       for (int i = 0; i < a.length; i++) {
@@ -1652,10 +1692,16 @@ public enum LengthUnit {
       return result;
     }
 
+    /**
+     * Returns the greatest common denominator of two {@code int} values.
+     */
     private static int gcd(final int a, final int b) {
       return a == 0 ? b : gcd(b % a, a);
     }
 
+    /**
+     * Returns the greatest common denominator of two {@code long} values.
+     */
     private static long gcd(final long a, final long b) {
       return a == 0L ? b : gcd(b % a, a);
     }
