@@ -1268,16 +1268,21 @@ public enum LengthUnit {
           isNegative = n instanceof Double
                        ? Double.doubleToLongBits((Double)n) < 0L
                        : ((Long)n) < 0L;
-          if (isNegative) {
-            parsePosition.setIndex(savedIndex + getNegativePrefix().length());
-          } else {
-            parsePosition.setIndex(savedIndex);
-          }
+          // subparseFraction doesn't handle negative numbers,
+          // so need to skip past negative prefix if present
+          parsePosition.setIndex(savedIndex
+                                 + isNegative ? getNegativePrefix().length() : 0);
           final Double f = subparseFraction(text, parsePosition, zero);
           if (f == null) {
+            // wasn't parseable as fraction.
+            // set position to end index of parsed integer
+            // and use original integer as numeric portion
             parsePosition.setIndex(nEndIndex);
             initialNumber = n;
           } else {
+            // was parseable as fraction.
+            // need to manually adjust sign because subparseFraction
+            // doesn't handle negative numbers
             initialNumber = isNegative ? f : -f;
           }
           hasDecimal = false;
@@ -1291,9 +1296,12 @@ public enum LengthUnit {
             hasDecimal = skipFraction = true;
             assert initialNumber != null;
           } else {
+            // plain integer as numeric portion
             initialNumber = n;
             hasDecimal = skipFraction = false;
           }
+          // need to know if negative to properly combine foot/inch/fraction.
+          // DecimalFormat returns -0.0d if "-0", so this should work for all cases
           isNegative = initialNumber instanceof Double
                        ? Double.doubleToLongBits((Double)initialNumber) < 0L
                        : ((Long)initialNumber) < 0L;
