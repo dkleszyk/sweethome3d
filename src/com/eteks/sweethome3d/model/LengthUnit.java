@@ -1404,8 +1404,8 @@ public enum LengthUnit {
       int numeratorDigits = 0;
       numerator: switch (c) {
         case '\u215F': // fraction numerator one
-          digitBuf [numeratorDigits] = 1;
-          numeratorDigits += 1;
+          digitBuf [0] = 1;
+          numeratorDigits = 1;
           textIndex += 1;
           break;
         default:
