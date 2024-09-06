@@ -1539,7 +1539,8 @@ public enum LengthUnit {
         final int digitEndIndex = digitIndex + numeratorSignificantDigits;
         acc: switch (0) {
           default:
-            // label can't be on loop because we need to skip past "break acc"
+            // label can't be on loop because we need to skip over "break acc"
+            // if loop doesn't completely successfully
             longAcc: switch (0) {
               default:
                 for ( ; digitIndex < digitEndIndex; digitIndex++, multiplierIndex++) {
@@ -1584,7 +1585,8 @@ public enum LengthUnit {
         final int digitEndIndex = digitIndex + denominatorSignificantDigits;
         acc: switch (0) {
           default:
-            // label can't be on loop because we need to skip past "break acc"
+            // label can't be on loop because we need to skip over "break acc"
+            // if loop doesn't completely successfully
             longAcc: switch (0) {
               default:
                 for ( ; digitIndex < digitEndIndex; digitIndex++, multiplierIndex++) {
