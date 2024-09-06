@@ -292,6 +292,8 @@ public enum LengthUnit {
     private String        name;
     private DecimalFormat lengthFormat;
     private DecimalFormat areaFormatWithUnit;
+    private int           fractionDenominator;
+    private float         fractionStep;
 
     @Override
     public Format getFormatWithUnit() {
@@ -322,8 +324,10 @@ public enum LengthUnit {
         this.formatLocale = Locale.getDefault();
         ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
         this.name = resource.getString("inchUnit");
+        this.fractionDenominator = Integer.parseInt(resource.getString("fractionDenominator"));
+        this.fractionStep = 1f / (float)this.fractionDenominator;
 
-        this.lengthFormat = new InchFractionFormat(true);
+        this.lengthFormat = new InchFractionFormat(true, this.fractionDenominator);
         String squareFootUnit = resource.getString("squareFootUnit");
         this.areaFormatWithUnit = new SquareFootAreaFormatWithUnit("#,##0 " + squareFootUnit.replace(".", "'.'"));
       }
@@ -336,7 +340,7 @@ public enum LengthUnit {
 
     @Override
     public float getMinimumLength() {
-      return LengthUnit.inchToCentimeter(0.125f);
+      return LengthUnit.inchToCentimeter(this.fractionStep);
     }
 
     @Override
@@ -346,7 +350,7 @@ public enum LengthUnit {
 
     @Override
     public float getStepSize() {
-      return inchToCentimeter(0.125f);
+      return inchToCentimeter(this.fractionStep);
     }
 
     @Override
@@ -369,6 +373,8 @@ public enum LengthUnit {
     private String        name;
     private DecimalFormat lengthFormat;
     private DecimalFormat areaFormatWithUnit;
+    private int           fractionDenominator;
+    private float         fractionStep;
 
     @Override
     public Format getFormatWithUnit() {
@@ -399,8 +405,10 @@ public enum LengthUnit {
         this.formatLocale = Locale.getDefault();
         ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
         this.name = resource.getString("inchUnit");
+        this.fractionDenominator = Integer.parseInt(resource.getString("fractionDenominator"));
+        this.fractionStep = 1f / (float)this.fractionDenominator;
 
-        this.lengthFormat = new InchFractionFormat(false);
+        this.lengthFormat = new InchFractionFormat(false, this.fractionDenominator);
         String squareFootUnit = resource.getString("squareFootUnit");
         this.areaFormatWithUnit = new SquareFootAreaFormatWithUnit("#,##0 " + squareFootUnit.replace(".", "'.'"));
       }
@@ -413,7 +421,7 @@ public enum LengthUnit {
 
     @Override
     public float getMinimumLength() {
-      return LengthUnit.inchToCentimeter(0.125f);
+      return LengthUnit.inchToCentimeter(this.fractionStep);
     }
 
     @Override
@@ -423,7 +431,7 @@ public enum LengthUnit {
 
     @Override
     public float getStepSize() {
-      return inchToCentimeter(0.125f);
+      return inchToCentimeter(this.fractionStep);
     }
 
     @Override
@@ -985,10 +993,10 @@ public enum LengthUnit {
 
     private transient String [][] vulgarFractionStrings;
 
-    public InchFractionFormat(boolean footInch) {
+    public InchFractionFormat(boolean footInch, int fractionDenominator) {
       super("0.000\"");
       this.footInch = footInch;
-      this.fractionDenominator = 16;
+      this.fractionDenominator = fractionDenominator != 8 ? (Integer)fractionDenominator : (Integer)null;
 
       ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
       this.positiveFootFormat = new MessageFormat(resource.getString("footFormat"));
