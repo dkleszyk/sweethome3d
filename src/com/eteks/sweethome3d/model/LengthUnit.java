@@ -1656,8 +1656,9 @@ public enum LengthUnit {
      */
     private static boolean tryConsumeFootUnitMarker(final String text,
                                                     final ParsePosition parsePosition) {
-      return linearSearch(FOOT_MARKER_CHARS, text.charAt(parsePosition.getIndex())) > -1
-             && incrementIndex(parsePosition);
+      final int index = parsePosition.getIndex();
+      return linearSearch(FOOT_MARKER_CHARS, text.charAt(index)) > -1
+             && setIndex(parsePosition, index + 1);
     }
 
     /**
@@ -1665,22 +1666,22 @@ public enum LengthUnit {
      */
     private static boolean tryConsumeInchUnitMarker(final String text,
                                                     final ParsePosition parsePosition) {
-      final char c = text.charAt(parsePosition.getIndex());
+      final int index = parsePosition.getIndex();
+      final char c = text.charAt(index);
       if (linearSearch(FOOT_MARKER_CHARS, c) > -1) {
-        return text.length() - 1 > parsePosition.getIndex()
-               && text.charAt(parsePosition.getIndex() + 1) == c
-               && incrementIndex(parsePosition)
-               && incrementIndex(parsePosition);
+        return text.length() - 1 > index
+               && text.charAt(index + 1) == c
+               && setIndex(parsePosition, index + 2);
       }
       return linearSearch(INCH_MARKER_CHARS, c) > -1
-             && incrementIndex(parsePosition);
+             && setIndex(parsePosition, index + 1);
     }
 
     /**
-     * Increments the parse position and returns {@code true}.
+     * Sets the index of the parse position and returns {@code true}.
      */
-    private static boolean incrementIndex(final ParsePosition parsePosition) {
-      parsePosition.setIndex(parsePosition.getIndex() + 1);
+    private static boolean setIndex(final ParsePosition parsePosition, final int index) {
+      parsePosition.setIndex(index);
       return true;
     }
 
