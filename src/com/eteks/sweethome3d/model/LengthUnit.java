@@ -1288,8 +1288,13 @@ public enum LengthUnit {
             } else {
               final int savedIndex = parsePosition.getIndex();
               final char c = text.charAt(parsePosition.getIndex());
-              if (linearSearch(FRACTION_SEPARATOR_CHARS, c) > -1
-                  || Character.isWhitespace(c)) {
+              // check for optional fraction separator.
+              // fraction separator may not be present in two cases:
+              // 1) fraction separated only by whitespace (skipped after
+              //    parsing numeric portion)
+              // 2) fraction starts with superscript digit (not consumed
+              //    by integerNumberFormat or decimalNumberFormat)
+              if (linearSearch(FRACTION_SEPARATOR_CHARS, c) > -1) {
                 parsePosition.setIndex(parsePosition.getIndex() + 1);
                 skipWhiteSpaces(text, parsePosition);
                 if (parsePosition.getIndex() >= text.length()) {
