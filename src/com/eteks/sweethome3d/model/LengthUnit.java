@@ -25,6 +25,7 @@ import java.text.Format;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.text.ParsePosition;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -805,6 +806,22 @@ public enum LengthUnit {
       '\u2075', '\u2076', '\u2077', '\u2078', '\u2079'
     };
 
+    private static final char [] FRACTION_SEPARATOR_CHARS = {
+      '+', '-', '\u2064'
+    };
+
+    private static final char [] FRACTION_SLASH_CHARS = {
+      '/', '\u2044'
+    };
+
+    private static final char [] INCH_MARKER_CHARS = {
+      '"'
+    };
+
+    private static final char [] FOOT_MARKER_CHARS = {
+      '\''
+    };
+
     // U+2064 ::= invisible plus
     private static final String [][] VULGAR_FRACTION_STRINGS = {
       // x->        1               2               3               4               5         6           7         8     9
@@ -820,6 +837,35 @@ public enum LengthUnit {
       {null, "\u2064\u2151", null,           null,           null,           null,           null, null,           null},       // x/9
       {null, "\u2064\u2152", null,           null,           null,           null,           null, null,           null, null}, // x/10
     };
+
+    private static final char [] VULGAR_FRACTION_CHARS;
+    private static final double [] VULGAR_FRACTION_VALUES;
+
+    static {
+      int count = 0;
+      for (int d = 0; d < VULGAR_FRACTION_STRINGS.length; d++) {
+        if (VULGAR_FRACTION_STRINGS [d] != null) {
+          for (int n = 0; n < VULGAR_FRACTION_STRINGS [d].length; n++) {
+            count += VULGAR_FRACTION_STRINGS [d][n] != null ? 1 : 0;
+          }
+        }
+      }
+      VULGAR_FRACTION_CHARS = new char [count];
+      VULGAR_FRACTION_VALUES = new double [count];
+
+      int i = 0;
+      for (int d = 0; d < VULGAR_FRACTION_STRINGS.length; d++) {
+        if (VULGAR_FRACTION_STRINGS [d] != null) {
+          for (int n = 0; n < VULGAR_FRACTION_STRINGS [d].length; n++) {
+            if (VULGAR_FRACTION_STRINGS [d][n] != null) {
+              VULGAR_FRACTION_CHARS [i] = VULGAR_FRACTION_STRINGS [d][n].charAt(1);
+              VULGAR_FRACTION_VALUES [i] = ((double)n) / ((double)d);
+              i += 1;
+            }
+          }
+        }
+      }
+    }
 
     private final boolean       footInch;
     private final Integer       fractionDenominator;
@@ -840,7 +886,7 @@ public enum LengthUnit {
     public InchFractionFormat(boolean footInch) {
       super("0.000\"");
       this.footInch = footInch;
-      this.fractionDenominator = null;
+      this.fractionDenominator = 16;
 
       ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
       this.positiveFootFormat = new MessageFormat(resource.getString("footFormat"));
@@ -993,12 +1039,11 @@ public enum LengthUnit {
       return result;
     }
 
-    private static int gcd(final int a, final int b) {
-      return a == 0 ? b : gcd(b % a, a);
-    }
-
     @Override
     public Number parse(String text, ParsePosition parsePosition) {
+      if (this.fractionDenominator != null) {
+        return parseVariableDenominator(text, parsePosition);
+      }
       double value = 0;
       ParsePosition numberPosition = new ParsePosition(parsePosition.getIndex());
       skipWhiteSpaces(text, numberPosition);
@@ -1107,6 +1152,512 @@ public enum LengthUnit {
 
       parsePosition.setIndex(numberPosition.getIndex());
       return value;
+    }
+
+    private static final int STATUS_NEGATIVE = 0;
+    private static final int STATUS_DECIMAL = 1;
+    private static final int STATUS_FRACTION = 2;
+    private static final int STATUS_INCH = 3;
+    private static final int STATUS_FOOT = 4;
+    private static final int STATUS_LENGTH = 5;
+
+    private Number parseVariableDenominator(final String text,
+                                            final ParsePosition parsePosition) {
+      boolean [] status = new boolean [STATUS_LENGTH];
+
+      // first number (feet or inches)
+      final Number firstNumber;
+      final boolean isNegative;
+      {
+        firstNumber = subparseNumber(text, parsePosition, status);
+        if (firstNumber == null) {
+          return null;
+        }
+        if (status [STATUS_INCH] || !status [STATUS_FOOT]) {
+          return (double)inchToCentimeter(firstNumber.floatValue());
+        }
+        isNegative = status [STATUS_NEGATIVE];
+      }
+
+      // second number (inches)
+      final Number secondNumber;
+      {
+        final int savedIndex = parsePosition.getIndex();
+        secondNumber = subparseNumber(text, parsePosition, status);
+        if (secondNumber == null /* 1'abc */
+            || status [STATUS_FOOT] /* 1'2' */
+            || status [STATUS_NEGATIVE] /* 1'-2" */) {
+          parsePosition.setIndex(savedIndex);
+          if (parsePosition.getErrorIndex() > 0) {
+            // clear error if secondNumber == null
+            // because we got valid value from firstNumber
+            parsePosition.setErrorIndex(-1);
+          }
+          return (double)footToCentimeter(firstNumber.floatValue());
+        }
+      }
+
+      return (double)(isNegative
+                      ? footToCentimeter(firstNumber.floatValue()) - inchToCentimeter(secondNumber.floatValue())
+                      : footToCentimeter(firstNumber.floatValue()) + inchToCentimeter(secondNumber.floatValue()));
+    }
+
+    private Number subparseNumber(final String text,
+                                  final ParsePosition parsePosition,
+                                  final boolean [] status) {
+      assert !isParseBigDecimal();
+      final char zero = getDecimalFormatSymbols().getZeroDigit();
+
+      // parse initial numeric portion
+      final Number initialNumber;
+      final boolean hasDecimal;
+      final boolean skipFraction;
+      final boolean isNegative;
+      {
+        skipWhiteSpaces(text, parsePosition);
+        final int savedIndex = parsePosition.getIndex();
+        final Number n = this.integerNumberFormat.parse(text, parsePosition);
+        if (n == null) {
+          Arrays.fill(status, false);
+          return null;
+        }
+        final char c = text.length() > parsePosition.getIndex()
+                       ? text.charAt(parsePosition.getIndex())
+                       : '\u0000';
+        if (linearSearch(FRACTION_SLASH_CHARS, c) > -1) {
+          final int nEndIndex = parsePosition.getIndex();
+          isNegative = n instanceof Double
+                       ? Double.doubleToLongBits((Double)n) < 0L
+                       : ((Long)n) < 0L;
+          if (isNegative) {
+            parsePosition.setIndex(savedIndex + getNegativePrefix().length());
+          } else {
+            parsePosition.setIndex(savedIndex);
+          }
+          final Double f = subparseFraction(text, parsePosition, zero);
+          if (f == null) {
+            parsePosition.setIndex(nEndIndex);
+            initialNumber = n;
+          } else {
+            initialNumber = isNegative ? f : -f;
+          }
+          hasDecimal = false;
+          skipFraction = true;
+        } else {
+          if (c == getDecimalFormatSymbols().getDecimalSeparator()) {
+            parsePosition.setIndex(savedIndex);
+            initialNumber = this.decimalNumberFormat.parse(text, parsePosition);
+            hasDecimal = skipFraction = true;
+            assert initialNumber != null;
+          } else {
+            initialNumber = n;
+            hasDecimal = skipFraction = false;
+          }
+          isNegative = initialNumber instanceof Double
+                       ? Double.doubleToLongBits((Double)initialNumber) < 0L
+                       : ((Long)initialNumber) < 0L;
+        }
+        skipWhiteSpaces(text, parsePosition);
+      }
+
+      // check for fraction part, and foot and inch unit markers
+      final Double fractionPart;
+      final boolean hasInch;
+      final boolean hasFoot;
+      switch (0) {
+        default:
+          if (text.length() > parsePosition.getIndex()) {
+            if (skipFraction) {
+              fractionPart = null;
+            } else {
+              final int savedIndex = parsePosition.getIndex();
+              final char c = text.charAt(parsePosition.getIndex());
+              if (linearSearch(FRACTION_SEPARATOR_CHARS, c) > -1
+                  || Character.isWhitespace(c)) {
+                parsePosition.setIndex(parsePosition.getIndex() + 1);
+                skipWhiteSpaces(text, parsePosition);
+                if (parsePosition.getIndex() >= text.length()) {
+                  parsePosition.setIndex(savedIndex);
+                  fractionPart = null;
+                  hasInch = hasFoot = false;
+                  break;
+                }
+              }
+              fractionPart = subparseFraction(text, parsePosition, zero);
+              if (fractionPart == null) {
+                parsePosition.setIndex(savedIndex);
+              } else if (parsePosition.getIndex() >= text.length()) {
+                // do not reset parsePosition here.
+                // successfully got a fraction, but then the string ended
+                hasInch = hasFoot = false;
+                break;
+              }
+            }
+
+            if (tryConsumeInchUnitMarker(text, parsePosition)) {
+              hasInch = true;
+              hasFoot = false;
+            } else if (tryConsumeFootUnitMarker(text, parsePosition)) {
+              hasInch = false;
+              hasFoot = true;
+            } else {
+              hasInch = false;
+              hasFoot = false;
+            }
+          } else {
+            fractionPart = null;
+            hasInch = false;
+            hasFoot = false;
+          }
+      }
+
+      // set status flags and return
+      status [STATUS_NEGATIVE] = isNegative;
+      status [STATUS_DECIMAL] = hasDecimal;
+      status [STATUS_INCH] = hasInch;
+      status [STATUS_FOOT] = hasFoot;
+      if (fractionPart != null) {
+        status [STATUS_FRACTION] = true;
+        return isNegative ? initialNumber.doubleValue() - fractionPart
+                          : initialNumber.doubleValue() + fractionPart;
+      } else {
+        status [STATUS_FRACTION] = false;
+        return initialNumber;
+      }
+    }
+
+    private static final int MAX_SIGNIFICANT_DIGITS = 19;
+
+    private static final long [] DIGIT_MULTIPLIERS = {
+      1000000000000000000L,
+      100000000000000000L,
+      10000000000000000L,
+      1000000000000000L,
+      100000000000000L,
+      10000000000000L,
+      1000000000000L,
+      100000000000L,
+      10000000000L,
+      1000000000L,
+      100000000L,
+      10000000L,
+      1000000L,
+      100000L,
+      10000L,
+      1000L,
+      100L,
+      10L,
+      1L
+    };
+
+    private static Double subparseFraction(final String text,
+                                           final ParsePosition parsePosition,
+                                           final char zero) {
+      // although this allows digits that are not superscript/subscript characters,
+      // this is not meant to be a wholly generic integer fraction parser.
+      // we explicitly do not handle negative numbers, digit grouping, decimals,
+      // exponents, whitespaces, or anything other than [digits] '/' [digits]
+      final byte [] digitBuf = new byte [MAX_SIGNIFICANT_DIGITS * 2];
+      int textIndex = parsePosition.getIndex();
+      char c = text.charAt(textIndex);
+
+      // check for vulgar fraction values
+      for (int i = linearSearch(VULGAR_FRACTION_CHARS, c); i > -1; ) {
+        parsePosition.setIndex(textIndex + 1);
+        return VULGAR_FRACTION_VALUES [i];
+      }
+
+      // parse numerator and fraction slash
+      int numeratorDigits = 0;
+      numerator: switch (c) {
+        case '\u215F': // fraction numerator one
+          digitBuf [numeratorDigits] = 1;
+          numeratorDigits += 1;
+          textIndex += 1;
+          break;
+        default:
+          int d = digitValue(c, zero);
+          if (d < 0) {
+            return null;
+          }
+          digits: switch (d) {
+            case 0: // skip leading zeroes
+              zeroes: while (true) {
+                if (++textIndex >= text.length()) {
+                  break numerator;
+                }
+                c = text.charAt(textIndex);
+                d = digitValue(c, zero);
+                if (d < 0) {
+                  break zeroes;
+                }
+              }
+              // intended fall thru
+            default:
+              significantDigits: while (true) {
+                digitBuf [numeratorDigits++] = (byte)d;
+                if (++textIndex >= text.length()) {
+                  break digits;
+                }
+                c = text.charAt(textIndex);
+                d = digitValue(c, zero);
+                if (d < 0) {
+                  break digits;
+                }
+                if (numeratorDigits >= MAX_SIGNIFICANT_DIGITS) {
+                  break significantDigits;
+                }
+              }
+              while (true) {
+                numeratorDigits += 1;
+                if (++textIndex >= text.length()) {
+                  break digits;
+                }
+                c = text.charAt(textIndex);
+                d = digitValue(c, zero);
+                if (d < 0) {
+                  break digits;
+                }
+              }
+          }
+
+          // check for fraction slash
+          if (linearSearch(FRACTION_SLASH_CHARS, c) < 0
+              || ++textIndex >= text.length()) {
+            return null;
+          }
+          c = text.charAt(textIndex);
+      }
+
+      // parse denominator
+      int denominatorDigits = 0;
+      denominator: switch (0) {
+        default:
+          int d = digitValue(c, zero);
+          if (d < 0) {
+            return null;
+          }
+          digits: switch (d) {
+            case 0: // skip leading zeroes
+              zeroes: while (true) {
+                if (++textIndex >= text.length()) {
+                  break denominator;
+                }
+                c = text.charAt(textIndex);
+                d = digitValue(c, zero);
+                if (d < 0) {
+                  break zeroes;
+                }
+              }
+              // intended fall thru
+            default:
+              significantDigits: while (true) {
+                // offset denominator digits in digit buf
+                digitBuf [MAX_SIGNIFICANT_DIGITS + denominatorDigits++] = (byte)d;
+                if (++textIndex >= text.length()) {
+                  break digits;
+                }
+                c = text.charAt(textIndex);
+                d = digitValue(c, zero);
+                if (d < 0) {
+                  break digits;
+                }
+                if (denominatorDigits >= MAX_SIGNIFICANT_DIGITS) {
+                  break significantDigits;
+                }
+              }
+              while (true) {
+                denominatorDigits += 1;
+                if (++textIndex >= text.length()) {
+                  break digits;
+                }
+                c = text.charAt(textIndex);
+                d = digitValue(c, zero);
+                if (d < 0) {
+                  break digits;
+                }
+              }
+          }
+      }
+
+      // got a valid numerator and denominator.
+      // update parse position
+      parsePosition.setIndex(textIndex);
+
+      // return zero for 0/X and X/0
+      if (numeratorDigits == 0 || denominatorDigits == 0) {
+        return Double.valueOf(0.0d);
+      }
+
+      // accumulate numerator
+      long longNumerator = 0L;
+      double doubleNumerator = 0.0d;
+      boolean numeratorFitsIntoLong = true;
+      {
+        final int numeratorSignificantDigits = Math.min(numeratorDigits, MAX_SIGNIFICANT_DIGITS);
+        int multiplierIndex = MAX_SIGNIFICANT_DIGITS - numeratorSignificantDigits;
+        int digitIndex = 0;
+        final int digitEndIndex = digitIndex + numeratorSignificantDigits;
+        acc: switch (0) {
+          default:
+            longAcc: switch (0) {
+              default:
+                for ( ; digitIndex < digitEndIndex; digitIndex++, multiplierIndex++) {
+                  final long scaledDigit = digitBuf [digitIndex] * DIGIT_MULTIPLIERS [multiplierIndex];
+                  final long r = longNumerator + scaledDigit;
+                  if (r < longNumerator) {
+                    // overflow
+                    break longAcc;
+                  }
+                  longNumerator = r;
+                }
+                break acc;
+            } // end longAcc
+            doubleNumerator = longNumerator;
+            numeratorFitsIntoLong = false;
+            for ( ; digitIndex < digitEndIndex; digitIndex++, multiplierIndex++) {
+              final long scaledDigit = digitBuf [digitIndex] * DIGIT_MULTIPLIERS [multiplierIndex];
+              doubleNumerator += scaledDigit;
+            }
+        } // end acc
+        if (numeratorDigits > MAX_SIGNIFICANT_DIGITS) {
+          if (numeratorFitsIntoLong) {
+            doubleNumerator = longNumerator;
+            numeratorFitsIntoLong = false;
+          }
+          doubleNumerator *= Math.pow(10.0d, numeratorDigits - MAX_SIGNIFICANT_DIGITS);
+          // return zero for inf/X
+          if (Double.isInfinite(doubleNumerator)) {
+            return Double.valueOf(0.0d);
+          }
+        }
+      }
+
+      // accumulate denominator
+      long longDenominator = 0L;
+      double doubleDenominator = 0.0d;
+      boolean denominatorFitsIntoLong = true;
+      {
+        final int denominatorSignificantDigits = Math.min(denominatorDigits, MAX_SIGNIFICANT_DIGITS);
+        int multiplierIndex = MAX_SIGNIFICANT_DIGITS - denominatorSignificantDigits;
+        int digitIndex = MAX_SIGNIFICANT_DIGITS;
+        final int digitEndIndex = digitIndex + denominatorSignificantDigits;
+        acc: switch (0) {
+          default:
+            longAcc: switch (0) {
+              default:
+                for ( ; digitIndex < digitEndIndex; digitIndex++, multiplierIndex++) {
+                  final long scaledDigit = digitBuf [digitIndex] * DIGIT_MULTIPLIERS [multiplierIndex];
+                  final long r = longDenominator + scaledDigit;
+                  if (r < longDenominator) {
+                    // overflow
+                    break longAcc;
+                  }
+                  longDenominator = r;
+                }
+                break acc;
+            } // end longAcc
+            doubleDenominator = longDenominator;
+            denominatorFitsIntoLong = false;
+            for ( ; digitIndex < digitEndIndex; digitIndex++, multiplierIndex++) {
+              final long scaledDigit = digitBuf [digitIndex] * DIGIT_MULTIPLIERS [multiplierIndex];
+              doubleDenominator += scaledDigit;
+            }
+        } // end acc
+        if (denominatorDigits > MAX_SIGNIFICANT_DIGITS) {
+          if (denominatorFitsIntoLong) {
+            doubleDenominator = longDenominator;
+            denominatorFitsIntoLong = false;
+          }
+          doubleDenominator *= Math.pow(10.0d, denominatorDigits - MAX_SIGNIFICANT_DIGITS);
+          // return zero for X/inf
+          if (Double.isInfinite(doubleDenominator)) {
+            return Double.valueOf(0.0d);
+          }
+        }
+      }
+
+      if (!numeratorFitsIntoLong) {
+        if (!denominatorFitsIntoLong) {
+           return doubleNumerator / doubleDenominator;
+        }
+        return doubleNumerator / longDenominator;
+      } else if (!denominatorFitsIntoLong) {
+        return longNumerator / doubleDenominator;
+      }
+
+      final long g = gcd(longNumerator, longDenominator);
+      longNumerator /= g;
+      longDenominator /= g;
+      return ((double)longNumerator) / ((double)longDenominator);
+    }
+
+    private static int digitValue(final char c, final char zero) {
+      int d = c - zero;
+      if (0 <= d && d <= 9) {
+        return d;
+      }
+      d = c - '\u2080';
+      if (0 <= d && d <= 9) {
+        return d;
+      }
+      d = c - '\u2070';
+      if (d == 0 || 4 <= d && d <= 9) {
+        return d;
+      }
+      switch (c) {
+        case '\u00b9':
+          return 1;
+        case '\u00b2':
+          return 2;
+        case '\u00b3':
+          return 3;
+        default:
+          return Character.digit(c, 10);
+      }
+    }
+
+    private static boolean tryConsumeFootUnitMarker(final String text,
+                                                    final ParsePosition parsePosition) {
+      return linearSearch(FOOT_MARKER_CHARS, text.charAt(parsePosition.getIndex())) > -1
+             && incrementIndex(parsePosition);
+    }
+
+    private static boolean tryConsumeInchUnitMarker(final String text,
+                                                    final ParsePosition parsePosition) {
+      final char c = text.charAt(parsePosition.getIndex());
+      if (linearSearch(FOOT_MARKER_CHARS, c) > -1) {
+        return text.length() - 1 > parsePosition.getIndex()
+               && text.charAt(parsePosition.getIndex() + 1) == c
+               && incrementIndex(parsePosition)
+               && incrementIndex(parsePosition);
+      }
+      return linearSearch(INCH_MARKER_CHARS, c) > -1
+             && incrementIndex(parsePosition);
+    }
+
+    private static boolean incrementIndex(final ParsePosition parsePosition) {
+      parsePosition.setIndex(parsePosition.getIndex() + 1);
+      return true;
+    }
+
+    private static int linearSearch(final char [] a, final char c) {
+      int result = -1;
+      for (int i = 0; i < a.length; i++) {
+        if (a [i] == c) {
+          result = i;
+          break;
+        }
+      }
+      return result;
+    }
+
+    private static int gcd(final int a, final int b) {
+      return a == 0 ? b : gcd(b % a, a);
+    }
+
+    private static long gcd(final long a, final long b) {
+      return a == 0L ? b : gcd(b % a, a);
     }
   }
 
