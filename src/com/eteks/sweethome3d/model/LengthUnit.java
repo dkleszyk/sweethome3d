@@ -1313,7 +1313,7 @@ public enum LengthUnit {
             || status [STATUS_FOOT] /* 1'2' */
             || status [STATUS_NEGATIVE] /* 1'-2" */) {
           parsePosition.setIndex(savedIndex);
-          if (parsePosition.getErrorIndex() > 0) {
+          if (parsePosition.getErrorIndex() >= 0) {
             // clear error if secondNumber == null
             // because we got valid value from firstNumber
             parsePosition.setErrorIndex(-1);
@@ -1510,6 +1510,7 @@ public enum LengthUnit {
             case 0: // skip leading zeroes
               zeroes: while (true) {
                 if (++textIndex >= text.length()) {
+                  // text ended without a fraction slash
                   return null;
                 }
                 c = text.charAt(textIndex);
@@ -1526,7 +1527,8 @@ public enum LengthUnit {
               significantDigits: while (true) {
                 digitBuf [numeratorDigits++] = (byte)d;
                 if (++textIndex >= text.length()) {
-                  break digits;
+                  // text ended without a fraction slash
+                  return null;
                 }
                 c = text.charAt(textIndex);
                 d = digitValue(c, zero);
@@ -1550,7 +1552,8 @@ public enum LengthUnit {
               }
           } // :digits:
 
-          // check for fraction slash
+          // check for fraction slash, and that we have at least
+          // one character after the slash that may be a denominator
           if (linearSearch(FRACTION_SLASH_CHARS, c) < 0
               || ++textIndex >= text.length()) {
             return null;
