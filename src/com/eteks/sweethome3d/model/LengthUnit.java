@@ -324,6 +324,8 @@ public enum LengthUnit {
         this.formatLocale = Locale.getDefault();
         ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
         this.name = resource.getString("inchUnit");
+        // TODO: figure out how to get fraction denominator from user prefs
+        //       instead of localization file
         this.fractionDenominator = Integer.parseInt(resource.getString("fractionDenominator"));
         this.fractionStep = 1f / (float)this.fractionDenominator;
 
@@ -405,6 +407,8 @@ public enum LengthUnit {
         this.formatLocale = Locale.getDefault();
         ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
         this.name = resource.getString("inchUnit");
+        // TODO: figure out how to get fraction denominator from user prefs
+        //       instead of localization file
         this.fractionDenominator = Integer.parseInt(resource.getString("fractionDenominator"));
         this.fractionStep = 1f / (float)this.fractionDenominator;
 
