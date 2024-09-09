@@ -1410,9 +1410,12 @@ public enum LengthUnit {
       final Double fractionPart;
       final boolean hasInch;
       final boolean hasFoot;
-      textEnd: switch (0) {
-        default:
-          if (text.length() > parsePosition.getIndex()) {
+      switch (parsePosition.getIndex() >= text.length() ? 1 : 0) {
+        case 1: // true
+          fractionPart = null;
+          hasInch = hasFoot = false;
+          break;
+        default: // false
             if (skipFraction) {
               fractionPart = null;
             } else {
@@ -1431,7 +1434,7 @@ public enum LengthUnit {
                   parsePosition.setIndex(savedIndex);
                   fractionPart = null;
                   hasInch = hasFoot = false;
-                  break textEnd;
+                  break;
                 }
               }
               fractionPart = subparseFraction(text, parsePosition, zero);
@@ -1441,7 +1444,7 @@ public enum LengthUnit {
                 // do not reset parsePosition here.
                 // successfully got a fraction, but then the string ended
                 hasInch = hasFoot = false;
-                break textEnd;
+                break;
               }
             }
 
@@ -1455,12 +1458,7 @@ public enum LengthUnit {
               hasInch = false;
               hasFoot = false;
             }
-          } else {
-            fractionPart = null;
-            hasInch = false;
-            hasFoot = false;
-          }
-      } // :textEnd:
+      }
 
       // set status flags and return
       status [STATUS_NEGATIVE] = isNegative;
