@@ -1416,48 +1416,48 @@ public enum LengthUnit {
           hasInch = hasFoot = false;
           break;
         default: // false
-            if (skipFraction) {
-              fractionPart = null;
-            } else {
-              final int savedIndex = parsePosition.getIndex();
-              final char c = text.charAt(parsePosition.getIndex());
-              // check for optional fraction separator.
-              // fraction separator may not be present in two cases:
-              // 1) fraction separated only by whitespace (skipped after
-              //    parsing numeric portion)
-              // 2) fraction starts with superscript digit (not consumed
-              //    by integerNumberFormat or decimalNumberFormat)
-              if (linearSearch(FRACTION_SEPARATOR_CHARS, c) > -1) {
-                parsePosition.setIndex(parsePosition.getIndex() + 1);
-                skipWhiteSpaces(text, parsePosition);
-                if (parsePosition.getIndex() >= text.length()) {
-                  parsePosition.setIndex(savedIndex);
-                  fractionPart = null;
-                  hasInch = hasFoot = false;
-                  break;
-                }
-              }
-              fractionPart = subparseFraction(text, parsePosition, zero);
-              if (fractionPart == null) {
+          if (skipFraction) {
+            fractionPart = null;
+          } else {
+            final int savedIndex = parsePosition.getIndex();
+            final char c = text.charAt(parsePosition.getIndex());
+            // check for optional fraction separator.
+            // fraction separator may not be present in two cases:
+            // 1) fraction separated only by whitespace (skipped after
+            //    parsing numeric portion)
+            // 2) fraction starts with superscript digit (not consumed
+            //    by integerNumberFormat or decimalNumberFormat)
+            if (linearSearch(FRACTION_SEPARATOR_CHARS, c) > -1) {
+              parsePosition.setIndex(parsePosition.getIndex() + 1);
+              skipWhiteSpaces(text, parsePosition);
+              if (parsePosition.getIndex() >= text.length()) {
                 parsePosition.setIndex(savedIndex);
-              } else if (parsePosition.getIndex() >= text.length()) {
-                // do not reset parsePosition here.
-                // successfully got a fraction, but then the string ended
+                fractionPart = null;
                 hasInch = hasFoot = false;
                 break;
               }
             }
-
-            if (tryConsumeInchUnitMarker(text, parsePosition)) {
-              hasInch = true;
-              hasFoot = false;
-            } else if (tryConsumeFootUnitMarker(text, parsePosition)) {
-              hasInch = false;
-              hasFoot = true;
-            } else {
-              hasInch = false;
-              hasFoot = false;
+            fractionPart = subparseFraction(text, parsePosition, zero);
+            if (fractionPart == null) {
+              parsePosition.setIndex(savedIndex);
+            } else if (parsePosition.getIndex() >= text.length()) {
+              // do not reset parsePosition here.
+              // successfully got a fraction, but then the string ended
+              hasInch = hasFoot = false;
+              break;
             }
+          }
+
+          if (tryConsumeInchUnitMarker(text, parsePosition)) {
+            hasInch = true;
+            hasFoot = false;
+          } else if (tryConsumeFootUnitMarker(text, parsePosition)) {
+            hasInch = false;
+            hasFoot = true;
+          } else {
+            hasInch = false;
+            hasFoot = false;
+          }
       }
 
       // set status flags and return
