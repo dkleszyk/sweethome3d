@@ -1544,7 +1544,8 @@ public enum LengthUnit {
               while (true) {
                 numeratorDigits += 1;
                 if (++textIndex >= text.length()) {
-                  break digits;
+                  // text ended without a fraction slash
+                  return null;
                 }
                 c = text.charAt(textIndex);
                 d = digitValue(c, zero);
